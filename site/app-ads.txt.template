@@ -1,0 +1,4 @@
+# Rename to app-ads.txt and publish at the ROOT of the developer website listed in Google Play
+# (e.g. https://example.com/app-ads.txt). Replace pub-XXXXXXXXXXXXXXXX with your AdMob publisher ID
+# (AdMob → Settings → Account information). Keep exactly one line per ad network:
+google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
