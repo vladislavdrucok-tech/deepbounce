@@ -249,5 +249,7 @@
 "store_noads_d": "Oyunlar ve bölümler arasında reklam yok. Kırmızı çizgide \"Devam et\" ve \"Kristalleri ikiye katla\" videosuz.",
 "leaderboards": "Sıralama",
 "lb_unavailable": "Sıralama şu anda kullanılamıyor. Google Play Oyunlar'da oturum aç ve bağlantını kontrol et.",
-"rate_game": "Oyunu değerlendir"
+"rate_game": "Oyunu değerlendir",
+"privacy_policy": "Gizlilik Politikası",
+"privacy_open_failed": "Tarayıcı açılamadı. Gizlilik Politikası: vladislavdrucok-tech.github.io/deepbounce"
 }

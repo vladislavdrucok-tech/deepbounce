@@ -240,5 +240,7 @@
 "store_noads_d": "게임과 레벨 사이에 광고가 없습니다. 빨간 선의 \"계속하기\"와 \"크리스털 2배\"를 영상 없이 사용합니다.",
 "leaderboards": "순위표",
 "lb_unavailable": "지금은 순위표를 볼 수 없습니다. Google Play 게임에 로그인하고 연결을 확인하세요.",
-"rate_game": "게임 평가하기"
+"rate_game": "게임 평가하기",
+"privacy_policy": "개인정보처리방침",
+"privacy_open_failed": "브라우저를 열 수 없습니다. 개인정보처리방침: vladislavdrucok-tech.github.io/deepbounce"
 }

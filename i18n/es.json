@@ -249,5 +249,7 @@
 "store_noads_d": "Sin anuncios entre partidas y niveles. «Continuar» en la línea roja y «Duplicar cristales» sin vídeo.",
 "leaderboards": "Clasificación",
 "lb_unavailable": "La clasificación no está disponible ahora. Inicia sesión en Google Play Juegos y comprueba la conexión.",
-"rate_game": "Valorar el juego"
+"rate_game": "Valorar el juego",
+"privacy_policy": "Política de privacidad",
+"privacy_open_failed": "No se pudo abrir el navegador. Política de privacidad: vladislavdrucok-tech.github.io/deepbounce"
 }

@@ -297,12 +297,24 @@ func show_settings() -> void:
 			toast(G.t("tutorial_reset")), true, Vector2(560, 80)))
 		v.add_child(_btn(G.t("restore"), func(): _restore(), true, Vector2(560, 80)))
 		v.add_child(_btn(G.t("rate_game"), func(): Play.open_store_page(), true, Vector2(560, 80)))
+		v.add_child(_btn(G.t("privacy_policy"), func(): open_privacy_policy(), true, Vector2(560, 80)))
 		if Ads.privacy_required and not G.is_ad_free():
 			v.add_child(_btn(G.t("privacy_options"), func(): Ads.show_privacy_options(), true, Vector2(560, 80)))
 		v.add_child(_btn(G.t("back"), func(): back(), false, Vector2(320, 88)))
 		var ver := UK.label(G.t("version", {"v": G.VERSION}), 20, Color(0.75, 0.9, 0.88, 0.7), 4, "Rubik-Bold")
 		ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(ver))
+
+func privacy_policy_url() -> String:
+	var cfg := ConfigFile.new()
+	cfg.load("res://config/monetization.cfg")
+	return String(cfg.get_value("legal", "privacy_policy_url", ""))
+
+func open_privacy_policy() -> void:
+	## The published English Privacy Policy in the browser (separate from the ad consent settings).
+	var url := privacy_policy_url()
+	if url == "" or OS.shell_open(url) != OK:
+		toast(G.t("privacy_open_failed"))
 
 func _toggle_row(key: String, setter: Callable) -> Control:
 	var h := HBoxContainer.new()

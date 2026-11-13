@@ -1,6 +1,6 @@
 # Deep Bounce — Google Play compliance sheet
 
-Answers for Play Console → *Policy → App content*, based on the shipped implementation (version 1.2.0, code 7,
+Answers for Play Console → *Policy → App content*, based on the shipped implementation (version 1.2.1, code 8,
 package `com.deepbounce.game`). Re-check after any SDK change.
 
 ## Implementation facts these answers rely on
@@ -49,6 +49,8 @@ security, and compliance** (Google Mobile Ads SDK).
 
 ## Data safety form
 
+**Final answers (Ukrainian, field by field): `docs/DATA_SAFETY_FINAL.md`.**
+
 **Does your app collect or share any of the required user data types?** Yes (through the Google Mobile Ads SDK).
 **Is all of the user data collected by your app encrypted in transit?** Yes.
 **Do you provide a way for users to request that their data is deleted?** The developer holds no user data; game data
@@ -61,7 +63,7 @@ when there is no account; mention Google's controls in the privacy policy).
 | App activity → App interactions | Yes | Yes (Google) | Not ephemeral | Required for the free version | Advertising or marketing, Analytics |
 | App info and performance → Crash logs, Diagnostics | Yes | Yes (Google) | Not ephemeral | Required for the free version | Analytics, Fraud prevention |
 | Device or other IDs | Yes | Yes (Google) | Not ephemeral | Required for the free version | Advertising or marketing, Analytics, Fraud prevention |
-| App activity → Other user-generated content / **Game progress is not a listed type**; for Play Games declare: **App activity → App interactions** (already declared) and **Personal info → User IDs** (Play Games player ID) | Yes | No (processed by Google as service provider) | Not ephemeral | Optional (only signed-in Play Games players) | App functionality |
+| Personal info → User IDs | Only after Play Games Services is enabled — see `docs/DATA_SAFETY_FINAL.md` §7 | | | | |
 | Financial info → Purchase history | handled by Google Play, not by the developer | — | — | — | Not declared by the developer per Google guidance for Play Billing |
 
 Reference: https://developers.google.com/admob/android/privacy/play-data-disclosure (verify against the current page

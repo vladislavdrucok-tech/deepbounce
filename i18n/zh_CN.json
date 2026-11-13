@@ -240,5 +240,7 @@
 "store_noads_d": "局与关卡之间不再有广告。红线处的“继续”和“双倍水晶”无需看视频。",
 "leaderboards": "排行榜",
 "lb_unavailable": "排行榜暂时不可用。请登录 Google Play 游戏并检查网络连接。",
-"rate_game": "给游戏评分"
+"rate_game": "给游戏评分",
+"privacy_policy": "隐私政策",
+"privacy_open_failed": "无法打开浏览器。隐私政策：vladislavdrucok-tech.github.io/deepbounce"
 }

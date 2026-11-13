@@ -249,5 +249,7 @@
 "store_noads_d": "No ads between runs and levels. Continue at the red line and Double Crystals without a video.",
 "leaderboards": "Leaderboards",
 "lb_unavailable": "Leaderboards are not available right now. Sign in to Google Play Games and check your connection.",
-"rate_game": "Rate the Game"
+"rate_game": "Rate the Game",
+"privacy_policy": "Privacy Policy",
+"privacy_open_failed": "Could not open the browser. The Privacy Policy is at vladislavdrucok-tech.github.io/deepbounce"
 }

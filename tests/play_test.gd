@@ -71,5 +71,13 @@ func _ready() -> void:
 	ok(not Play.maybe_ask_review(rec) and fake.reviews == 3, "never more than three times in total", "asked %d" % fake.reviews)
 	Play.open_store_page()
 	ok(fake.store_pages == 1, "'Rate the Game' in settings opens the store page")
+	# Privacy Policy entry in settings points at the published HTTPS page
+	var cfg := ConfigFile.new()
+	cfg.load("res://config/monetization.cfg")
+	var url := String(cfg.get_value("legal", "privacy_policy_url", ""))
+	ok(url == "https://vladislavdrucok-tech.github.io/deepbounce/", "Settings → Privacy Policy opens the published page", url)
+	var html := FileAccess.get_file_as_string("res://site/index.html")
+	ok(html.contains("<html lang=\"en\">") and not html.contains("lang=\"uk\"") and html.contains("Deep Bounce") and html.contains("November 13, 2026"),
+		"policy source is English only, with developer and date filled in")
 	print("PLAY " + ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit(1 if fails > 0 else 0)
