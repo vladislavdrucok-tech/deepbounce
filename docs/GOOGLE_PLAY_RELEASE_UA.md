@@ -25,7 +25,7 @@
 
 1. **Акаунт розробника Google Play** (https://play.google.com/console, разовий внесок 25 $, перевірка особи).
 2. **Email для зв'язку** (показується в лістингу) — і впишіть його в `store/privacy-policy.html` замість
-   `[CONTACT EMAIL]`, разом з ім'ям розробника й датою.
+   `[CONTACT EMAIL]` — **зроблено**: пошта підтримки `deepbounce.support@gmail.com`, розробник «Deep Bounce», дата 13.11.2026. Цю ж пошту вкажи в Play Console → Store settings → Contact details (основну пошту акаунта не змінюй).
 3. **Опублікувати політику конфіденційності за публічним URL.** Найпростіше — GitHub Pages: покладіть
    `privacy-policy.html` у публічний репозиторій → Settings → Pages → вкажіть гілку → отримаєте адресу на
    кшталт `https://<логін>.github.io/<репо>/privacy-policy.html`. Або будь-який власний сайт.

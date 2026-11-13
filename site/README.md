@@ -8,7 +8,8 @@
   `https://vladislavdrucok-tech.github.io/<repo>/privacy-policy.html`.
 - **Google Sites** (free): paste the text into a new site and publish.
 
-Before publishing, replace `[EFFECTIVE DATE]`, `[DEVELOPER NAME]` and `[CONTACT EMAIL]`.
+Filled in: developer "Deep Bounce", effective date November 13, 2026, support contact deepbounce.support@gmail.com.
+Published by `.github/workflows/pages.yml` to https://vladislavdrucok-tech.github.io/deepbounce/ .
 
 `app-ads.txt` must be at the root of a domain (for GitHub Pages: a repository named
 `vladislavdrucok-tech.github.io`), see `app-ads.txt.template`.
