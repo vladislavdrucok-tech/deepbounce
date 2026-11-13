@@ -246,5 +246,8 @@
 "hint_electric": "Las bolas eléctricas lanzan chispas a la piedra más cercana: ideales contra piedras dispersas.",
 "hint_big": "Las piedras grandes necesitan muchos impactos. Mantén un chorro de bolas sobre ellas.",
 "hint_combo": "Pesadas para las piedras grandes, chispas para el resto.",
-"store_noads_d": "Sin anuncios entre partidas y niveles. «Continuar» en la línea roja y «Duplicar cristales» sin vídeo."
+"store_noads_d": "Sin anuncios entre partidas y niveles. «Continuar» en la línea roja y «Duplicar cristales» sin vídeo.",
+"leaderboards": "Clasificación",
+"lb_unavailable": "La clasificación no está disponible ahora. Inicia sesión en Google Play Juegos y comprueba la conexión.",
+"rate_game": "Valorar el juego"
 }

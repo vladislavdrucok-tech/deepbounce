@@ -246,5 +246,8 @@
 "hint_electric": "Les billes électriques foudroient la pierre la plus proche : idéal contre les pierres éparpillées.",
 "hint_big": "Les grosses pierres demandent beaucoup de coups. Garde un flot de billes sur elles.",
 "hint_combo": "Les lourdes pour les grosses pierres, les étincelles pour le reste.",
-"store_noads_d": "Aucune pub entre les parties et les niveaux. « Continuer » à la ligne rouge et « Doubler les cristaux » sans vidéo."
+"store_noads_d": "Aucune pub entre les parties et les niveaux. « Continuer » à la ligne rouge et « Doubler les cristaux » sans vidéo.",
+"leaderboards": "Classement",
+"lb_unavailable": "Le classement est indisponible pour le moment. Connecte-toi à Google Play Jeux et vérifie ta connexion.",
+"rate_game": "Noter le jeu"
 }

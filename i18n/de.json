@@ -246,5 +246,8 @@
 "hint_electric": "Elektrische Kugeln funken den nächsten Stein an: ideal gegen verstreute Steine.",
 "hint_big": "Große Steine brauchen viele Treffer. Halte einen Kugelstrom auf ihnen.",
 "hint_combo": "Schwere Kugeln für große Steine, Funken für den Rest.",
-"store_noads_d": "Keine Werbung zwischen Läufen und Levels. „Weiter“ an der roten Linie und „Kristalle verdoppeln“ ohne Video."
+"store_noads_d": "Keine Werbung zwischen Läufen und Levels. „Weiter“ an der roten Linie und „Kristalle verdoppeln“ ohne Video.",
+"leaderboards": "Bestenliste",
+"lb_unavailable": "Die Bestenlisten sind gerade nicht verfügbar. Melde dich bei Google Play Spiele an und prüfe die Verbindung.",
+"rate_game": "Spiel bewerten"
 }

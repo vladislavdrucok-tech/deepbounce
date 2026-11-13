@@ -246,5 +246,8 @@
 "hint_electric": "Electric balls spark the nearest stone: great against scattered stones.",
 "hint_big": "Big stones take many hits. Keep a stream of balls on them.",
 "hint_combo": "Heavy for the big stones, sparks for the rest.",
-"store_noads_d": "No ads between runs and levels. Continue at the red line and Double Crystals without a video."
+"store_noads_d": "No ads between runs and levels. Continue at the red line and Double Crystals without a video.",
+"leaderboards": "Leaderboards",
+"lb_unavailable": "Leaderboards are not available right now. Sign in to Google Play Games and check your connection.",
+"rate_game": "Rate the Game"
 }

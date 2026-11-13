@@ -246,5 +246,8 @@
 "hint_electric": "Bolas elétricas soltam faíscas na pedra mais próxima: ótimas contra pedras espalhadas.",
 "hint_big": "Pedras grandes precisam de muitos acertos. Mantenha um fluxo de bolas nelas.",
 "hint_combo": "Pesadas para as pedras grandes, faíscas para o resto.",
-"store_noads_d": "Sem anúncios entre partidas e fases. \"Continuar\" na linha vermelha e \"Dobrar cristais\" sem vídeo."
+"store_noads_d": "Sem anúncios entre partidas e fases. \"Continuar\" na linha vermelha e \"Dobrar cristais\" sem vídeo.",
+"leaderboards": "Ranking",
+"lb_unavailable": "O ranking não está disponível agora. Entre no Google Play Games e verifique a conexão.",
+"rate_game": "Avaliar o jogo"
 }

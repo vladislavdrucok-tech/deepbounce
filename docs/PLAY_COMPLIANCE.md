@@ -1,6 +1,6 @@
 # Deep Bounce — Google Play compliance sheet
 
-Answers for Play Console → *Policy → App content*, based on the shipped implementation (version 1.1.1, code 6,
+Answers for Play Console → *Policy → App content*, based on the shipped implementation (version 1.2.0, code 7,
 package `com.deepbounce.game`). Re-check after any SDK change.
 
 ## Implementation facts these answers rely on
@@ -15,6 +15,8 @@ package `com.deepbounce.game`). Re-check after any SDK change.
 | Purchases | Google Play Billing Library 9.1.0 (official GodotGooglePlayBilling 3.3.0); 7 permanent + 4 consumable one-time products |
 | Permissions (manifest) | INTERNET, ACCESS_NETWORK_STATE, VIBRATE, com.google.android.gms.permission.AD_ID, ACCESS_ADSERVICES_AD_ID / _ATTRIBUTION / _TOPICS (added by the Ads SDK), com.android.vending.BILLING, WAKE_LOCK, FOREGROUND_SERVICE (SDK internals) |
 | Target / min SDK | target 36, min 24, 64-bit (arm64-v8a, x86_64), AAB |
+| Leaderboards | Google Play Games Services v2 (play-services-games-v2 21.0.0) via own plugin `android_plugins/deepbounce-play`; started only when `[play_games] app_id` is set; sends two scores (depth record, total level stars) for players signed in to Play Games — `scripts/play_services.gd` |
+| Rating | Google Play In-App Review (review 2.0.2): asked only after a new record / 3-star level, ≥6 finished runs, ≥30 days apart, max 3 times; "Rate the Game" in settings opens the store page |
 | Other SDKs | none (no analytics, crash reporting or social SDKs) |
 
 ## Privacy policy
@@ -59,6 +61,7 @@ when there is no account; mention Google's controls in the privacy policy).
 | App activity → App interactions | Yes | Yes (Google) | Not ephemeral | Required for the free version | Advertising or marketing, Analytics |
 | App info and performance → Crash logs, Diagnostics | Yes | Yes (Google) | Not ephemeral | Required for the free version | Analytics, Fraud prevention |
 | Device or other IDs | Yes | Yes (Google) | Not ephemeral | Required for the free version | Advertising or marketing, Analytics, Fraud prevention |
+| App activity → Other user-generated content / **Game progress is not a listed type**; for Play Games declare: **App activity → App interactions** (already declared) and **Personal info → User IDs** (Play Games player ID) | Yes | No (processed by Google as service provider) | Not ephemeral | Optional (only signed-in Play Games players) | App functionality |
 | Financial info → Purchase history | handled by Google Play, not by the developer | — | — | — | Not declared by the developer per Google guidance for Play Billing |
 
 Reference: https://developers.google.com/admob/android/privacy/play-data-disclosure (verify against the current page
@@ -78,3 +81,13 @@ At the root of the developer website listed in the Play store listing: one line
 ## Release gating
 `tools/android/check_store_ready.sh` must print READY before a production build: real AdMob IDs (not Google test
 IDs), `use_test_ads=false`, Play licence key, signing key present in the environment.
+
+## Play Games Services (leaderboards) — Console setup
+Play Console → Grow users → Play Games Services → Setup and management → Configuration: create the Play Games
+project ("No, my game doesn't use Google APIs"), add an **Android credential** for `com.deepbounce.game` (OAuth
+client; Console creates it for the Play App Signing key — also add one for the upload key if you install test APKs
+signed with it). Leaderboards → create two: **Depth record** (Larger is better, numeric, integer, unit "m") and
+**Level stars** (Larger is better, numeric, integer; limits 0–150). Copy the project ID and both leaderboard IDs
+into `config/monetization.cfg` → `[play_games]`, rebuild, add testers under Play Games Services → Testers, then
+**Publish** the Play Games project. Verify the Data safety entry above against Google's current guidance:
+https://developers.google.com/games/services/console/enabling#data-safety

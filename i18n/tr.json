@@ -246,5 +246,8 @@
 "hint_electric": "Elektrikli toplar en yakın taşa kıvılcım atar: dağınık taşlara karşı harika.",
 "hint_big": "Büyük taşlar çok isabet ister. Üzerlerinde sürekli bir top akışı tut.",
 "hint_combo": "Büyük taşlara ağır toplar, gerisine kıvılcımlar.",
-"store_noads_d": "Oyunlar ve bölümler arasında reklam yok. Kırmızı çizgide \"Devam et\" ve \"Kristalleri ikiye katla\" videosuz."
+"store_noads_d": "Oyunlar ve bölümler arasında reklam yok. Kırmızı çizgide \"Devam et\" ve \"Kristalleri ikiye katla\" videosuz.",
+"leaderboards": "Sıralama",
+"lb_unavailable": "Sıralama şu anda kullanılamıyor. Google Play Oyunlar'da oturum aç ve bağlantını kontrol et.",
+"rate_game": "Oyunu değerlendir"
 }

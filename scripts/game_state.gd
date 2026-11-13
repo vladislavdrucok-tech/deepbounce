@@ -13,12 +13,12 @@ signal profile_changed
 const I18N := preload("res://scripts/i18n.gd")
 const CATALOG := preload("res://scripts/catalog.gd")
 const SAVE_PATH := "user://deep_bounce.save"
-const VERSION := "1.1.1"
+const VERSION := "1.2.0"
 const SAVE_VERSION := 4
 const FIRST_CLEAR := [20, 25, 30, 35, 40]     # first-clear bonus per chapter (levels 1-10, 11-20, …)
 
 var settings := {"lang": "en", "lang_set": false, "sound": true, "music": true, "vibration": true, "shake": 2, "reduced_fx": false}
-var meta := {"crystals": 0, "best": 0, "tutorial": 0, "runs": 0, "broken": 0, "spent": 0, "last_finished": ""}
+var meta := {"crystals": 0, "best": 0, "tutorial": 0, "runs": 0, "broken": 0, "spent": 0, "last_finished": "", "review_n": 0, "review_t": 0}
 var cos := {"balls": ["classic"], "ball": "classic", "cannons": ["classic"], "cannon": "classic"}
 var ent := {"no_ads": false, "products": []}   # permanent Google Play products confirmed for this profile
 var purchases := {}     # purchaseToken -> {"pid", "state": pending|granted|revoked, "acked", "consumed", "t", "order"}
@@ -300,7 +300,7 @@ func load_game() -> bool:
 
 func reset_defaults() -> void:
 	settings = {"lang": "en", "lang_set": false, "sound": true, "music": true, "vibration": true, "shake": 2, "reduced_fx": false}
-	meta = {"crystals": 0, "best": 0, "tutorial": 0, "runs": 0, "broken": 0, "spent": 0, "last_finished": ""}
+	meta = {"crystals": 0, "best": 0, "tutorial": 0, "runs": 0, "broken": 0, "spent": 0, "last_finished": "", "review_n": 0, "review_t": 0}
 	cos = {"balls": ["classic"], "ball": "classic", "cannons": ["classic"], "cannon": "classic"}
 	ent = {"no_ads": false, "products": []}
 	purchases = {}

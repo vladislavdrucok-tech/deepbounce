@@ -246,5 +246,8 @@
 "hint_electric": "Le palline elettriche colpiscono con una scintilla la pietra più vicina: ottime contro pietre sparse.",
 "hint_big": "Le pietre grandi richiedono molti colpi. Tieni su di loro un flusso di palline.",
 "hint_combo": "Pesanti per le pietre grandi, scintille per il resto.",
-"store_noads_d": "Niente pubblicità tra partite e livelli. «Continua» alla linea rossa e «Raddoppia i cristalli» senza video."
+"store_noads_d": "Niente pubblicità tra partite e livelli. «Continua» alla linea rossa e «Raddoppia i cristalli» senza video.",
+"leaderboards": "Classifica",
+"lb_unavailable": "La classifica non è disponibile ora. Accedi a Google Play Giochi e controlla la connessione.",
+"rate_game": "Valuta il gioco"
 }

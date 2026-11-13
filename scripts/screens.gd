@@ -234,7 +234,8 @@ func show_menu() -> void:
 		h.add_child(UK.button(G.t("shop"), func(): show_shop(), true, Vector2(273, 84)))
 		h.add_child(UK.button(G.t("settings"), func(): show_settings(), true, Vector2(273, 84)))
 		v.add_child(h)
-		v.add_child(_btn(G.t("support"), func(): show_support(), true, Vector2(560, 80)))
+		v.add_child(_btn(G.t("leaderboards"), func(): Play.show_leaderboards(), true, Vector2(560, 76)))
+		v.add_child(_btn(G.t("support"), func(): show_support(), true, Vector2(560, 76)))
 		var ver := UK.label(G.t("version", {"v": G.VERSION}), 20, Color(0.75, 0.9, 0.88, 0.7), 4, "Rubik-Bold")
 		ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(ver))
@@ -295,6 +296,7 @@ func show_settings() -> void:
 			main.tutorial_reset()
 			toast(G.t("tutorial_reset")), true, Vector2(560, 80)))
 		v.add_child(_btn(G.t("restore"), func(): _restore(), true, Vector2(560, 80)))
+		v.add_child(_btn(G.t("rate_game"), func(): Play.open_store_page(), true, Vector2(560, 80)))
 		if Ads.privacy_required and not G.is_ad_free():
 			v.add_child(_btn(G.t("privacy_options"), func(): Ads.show_privacy_options(), true, Vector2(560, 80)))
 		v.add_child(_btn(G.t("back"), func(): back(), false, Vector2(320, 88)))

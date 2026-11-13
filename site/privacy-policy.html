@@ -38,8 +38,8 @@ Contact: <a href="mailto:[CONTACT EMAIL]"><strong>[CONTACT EMAIL]</strong></a></
 (Android package <code>com.deepbounce.game</code>), why it is processed, who processes it, and the choices you have.
 The game itself does not require an account and does not ask for your name, email address, phone number, contacts,
 photos or precise location. The game does, however, include third-party services from Google — advertising
-(Google AdMob with the User Messaging Platform) and purchases (Google Play Billing) — that process certain data as
-described below.</p>
+(Google AdMob with the User Messaging Platform), purchases (Google Play Billing) and optional leaderboards (Google
+Play Games Services) — that process certain data as described below.</p>
 </div>
 
 <h2>1. Information stored by the game on your device</h2>
@@ -84,6 +84,20 @@ receives from Google Play only the information needed to deliver the item: the p
 state, a purchase token and an order identifier. This is stored on your device as described in section 1. Google's
 processing of payment data is governed by the
 <a href="https://payments.google.com/payments/apis-secure/u/0/get_legal_document?ldo=0&amp;ldt=privacynotice">Google Payments Privacy Notice</a>.</p>
+
+<h2>4a. Leaderboards — Google Play Games Services</h2>
+<p>If you are signed in to Google Play Games on your device, Deep Bounce can send your best results (your depth
+record in Endless Mode and your total level stars) to Google Play Games Services so that they appear on the game's
+leaderboards. The leaderboards show your Play Games gamer name and avatar according to your Play Games profile
+settings. Sign-in and profile data are handled by Google; the developer does not receive your Google account email
+or password. If you are not signed in to Play Games, nothing is sent and the rest of the game works as usual. You
+can manage or delete your Play Games data and profile visibility in the Google Play Games app
+(<a href="https://support.google.com/googleplay/answer/2954594">Play Games settings</a>).</p>
+
+<h2>4b. Rating the game</h2>
+<p>The game may occasionally show Google Play's own rating card, or open the game's Google Play page when you tap
+"Rate the Game". Ratings and reviews are submitted to Google Play under your Google account; the game does not see
+whether or what you rated.</p>
 
 <h2>5. Cookies and similar technologies</h2>
 <p>The game does not use browser cookies. The Google Mobile Ads SDK uses device identifiers (such as the advertising

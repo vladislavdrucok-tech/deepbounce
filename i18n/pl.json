@@ -264,5 +264,8 @@
 "hint_electric": "Elektryczne kulki razią iskrą najbliższy kamień: świetne na rozproszone kamienie.",
 "hint_big": "Duże kamienie wymagają wielu trafień. Kieruj na nie strumień kulek.",
 "hint_combo": "Ciężkie na duże kamienie, iskry na resztę.",
-"store_noads_d": "Bez reklam między zejściami i poziomami. „Kontynuuj” przy czerwonej linii i „Podwój kryształy” bez filmu."
+"store_noads_d": "Bez reklam między zejściami i poziomami. „Kontynuuj” przy czerwonej linii i „Podwój kryształy” bez filmu.",
+"leaderboards": "Ranking",
+"lb_unavailable": "Ranking jest teraz niedostępny. Zaloguj się w Grach Google Play i sprawdź połączenie.",
+"rate_game": "Oceń grę"
 }

@@ -99,6 +99,10 @@ func _ready() -> void:
 	hud.visible = false
 	Store.start()
 	Ads.start()
+	Play.start()
+	Play.leaderboards_result.connect(func(shown):
+		if not shown:
+			screens.toast(G.t("lb_unavailable"), 3.0))
 	G.diag("[game] start %s, save format %d%s, language %s" % [G.VERSION, G.SAVE_VERSION,
 		(" (migrated from %d)" % G.migrated_from) if G.migrated_from > 0 else "", G.settings.lang])
 	var qa_mode := false
@@ -398,7 +402,17 @@ func _finish() -> void:
 	hud.hide_hint()
 	world.aim_visible = false
 	G.finish_run(sim, level)
+	# ranking: Google keeps the best score per player
+	if sim.mode == "endless":
+		Play.submit("depth", int(G.meta.best))
+	elif bool(G.result.get("won", false)):
+		Play.submit("stars", G.level_stars_total())
 	_show_result()
+	# a new record or a 3-star level is a good moment to ask for a rating (rarely, see config [review])
+	if Play.review_due(G.result):
+		get_tree().create_timer(1.2).timeout.connect(func():
+			if screens.current in ["over", "won"] and Ads.showing == "":
+				Play.maybe_ask_review(G.result))
 
 func _show_result() -> void:
 	var r := G.result

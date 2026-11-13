@@ -12,6 +12,19 @@ VERSION=$(sed -n 's/^version\/name="\(.*\)"/\1/p' export_presets.cfg)
 mkdir -p build
 "$G" --headless --path . --import >/dev/null 2>&1 || true
 
+games_resource() {
+	# Play Games Services needs its project ID as a string resource (a literal number in the manifest is ignored)
+	ID=$(sed -n '/^\[play_games\]/,/^\[/s/^app_id="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' config/monetization.cfg | head -1)
+	if [ -d android/build/res ]; then
+		mkdir -p android/build/res/values
+		if [ -n "$ID" ]; then
+			printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="game_services_project_id" translatable="false">%s</string>\n</resources>\n' "$ID" > android/build/res/values/deepbounce_games.xml
+		else
+			rm -f android/build/res/values/deepbounce_games.xml
+		fi
+	fi
+}
+
 prepare_template() {
 	# The Godot 4.5.1 template compiles against API 35; Google Play now requires target API 36.
 	if [ -f android/build/config.gradle ]; then
@@ -28,6 +41,7 @@ export_one() {   # $1 = 0 (apk) / 1 (aab), $2 = output path
 		prepare_template
 	fi
 	prepare_template
+	games_resource
 	"$G" --headless --path . --export-release "Android" "$2"
 }
 

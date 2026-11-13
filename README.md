@@ -1,4 +1,4 @@
-# Deep Bounce 1.1.1
+# Deep Bounce 1.2.0
 
 Гра для Android на Godot 4.5.1 (GDScript, рендерер Compatibility / OpenGL ES 3).
 Проводиш пальцем, відпускаєш — гармата вгорі випускає серію кульок униз, вони рикошетять від стін і каміння,
@@ -9,8 +9,8 @@
 «Без реклами») з Google Play Billing, «Підтримка автора», реклама AdMob з UMP (друга спроба й подвоєння кристалів
 за відео, interstitial між забігами з обмеженнями), 12 мов.
 
-Готові збірки: [`../builds/DeepBounce-1.1.1.apk`](../builds/DeepBounce-1.1.1.apk) (встановлення на телефон,
-ставиться поверх 1.0–1.0.3 зі збереженням прогресу) і [`../builds/DeepBounce-1.1.1.aab`](../builds/DeepBounce-1.1.1.aab)
+Готові збірки: [`../builds/DeepBounce-1.2.0.apk`](../builds/DeepBounce-1.2.0.apk) (встановлення на телефон,
+ставиться поверх 1.0–1.0.3 зі збереженням прогресу) і [`../builds/DeepBounce-1.2.0.aab`](../builds/DeepBounce-1.2.0.aab)
 (для Google Play). Обидві підписані тим самим релізним ключем, що й 1.0.
 
 Документи: монетизація й налаштування Play Console/AdMob/UMP, Data safety, app-ads.txt —
@@ -20,7 +20,7 @@
 
 ## Встановлення на телефон
 
-1. Скачай `builds/DeepBounce-1.1.1.apk` на телефон (на GitHub: відкрий файл → «Download raw file»).
+1. Скачай `builds/DeepBounce-1.2.0.apk` на телефон (на GitHub: відкрий файл → «Download raw file»).
 2. Відкрий файл. Android попросить дозволити встановлення з цього джерела (браузер або «Файли») — дозволь.
 3. «Встановити» → значок **Deep Bounce** з'явиться серед програм.
 4. Гра працює офлайн; мережа потрібна лише для реклами та покупок Google Play. Покупки працюють тільки в грі,
@@ -78,11 +78,11 @@ export ANDROID_HOME=/шлях/до/android-sdk
 export GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/шлях/до/deep_bounce_release.jks
 export GODOT_ANDROID_KEYSTORE_RELEASE_USER=deepbounce
 export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=...
-tools/android/build_release.sh both        # build/DeepBounce-1.1.1.apk і build/DeepBounce-1.1.1.aab
-apksigner verify --print-certs build/DeepBounce-1.1.1.apk
+tools/android/build_release.sh both        # build/DeepBounce-1.2.0.apk і build/DeepBounce-1.2.0.aab
+apksigner verify --print-certs build/DeepBounce-1.2.0.apk
 ```
 
-Пресет «Android» у `export_presets.cfg`: пакет `com.deepbounce.game`, версія 1.1.1 (code 6), target API 36,
+Пресет «Android» у `export_presets.cfg`: пакет `com.deepbounce.game`, версія 1.2.0 (code 7), target API 36,
 портрет, arm64-v8a і x86_64, адаптивна іконка. Плагіни: `addons/GodotGooglePlayBilling` (офіційний, Billing
 Library 9.1.0) і власний `addons/DeepBounceAds` (Google Mobile Ads 24.9.0 + UMP 3.2.0; вихідний код —
 `android_plugins/deepbounce-ads`, збірка: `cd android_plugins/deepbounce-ads && gradle assemble`).
