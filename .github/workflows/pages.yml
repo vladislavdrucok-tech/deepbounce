@@ -1,13 +1,14 @@
-# Publishes the English Privacy Policy (site/index.html) to GitHub Pages:
+# Publishes the English Privacy Policy (site/index.html) and Terms of Use (site/terms-of-use.html) to GitHub Pages:
 #   https://vladislavdrucok-tech.github.io/deepbounce/
+#   https://vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html
 # GitHub Pages serves the gh-pages branch (Settings → Pages → Deploy from a branch: gh-pages / root).
-# This workflow copies only the public page into that branch; no other repository file is published.
+# This workflow copies only these public pages into that branch; no other repository file is published.
 name: Publish privacy policy
 
 on:
   push:
     branches: [main]
-    paths: ["site/index.html", ".github/workflows/pages.yml"]
+    paths: ["site/index.html", "site/terms-of-use.html", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -24,15 +25,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Refuse to publish unfinished placeholders
         run: |
-          if grep -nE '\[(CONTACT EMAIL|DEVELOPER NAME|EFFECTIVE DATE)\]' site/index.html; then
-            echo "::error::site/index.html still contains placeholders"; exit 1
+          if grep -nE '\[(CONTACT EMAIL|DEVELOPER NAME|EFFECTIVE DATE)\]' site/index.html site/terms-of-use.html; then
+            echo "::error::a published page still contains placeholders"; exit 1
           fi
-      - name: Update the gh-pages branch with the public page only
+      - name: Update the gh-pages branch with the public pages only
         run: |
           set -e
           mkdir /tmp/public
           cp site/index.html /tmp/public/index.html
           cp site/index.html /tmp/public/privacy-policy.html
+          cp site/terms-of-use.html /tmp/public/terms-of-use.html
           touch /tmp/public/.nojekyll
           cd /tmp/public
           git init -q -b gh-pages

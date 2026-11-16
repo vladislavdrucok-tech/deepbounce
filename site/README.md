@@ -13,3 +13,5 @@ Published by `.github/workflows/pages.yml` to https://vladislavdrucok-tech.githu
 
 `app-ads.txt` must be at the root of a domain (for GitHub Pages: a repository named
 `vladislavdrucok-tech.github.io`), see `app-ads.txt.template`.
+
+`terms-of-use.html` is the English Terms of Use, published at https://vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html .
