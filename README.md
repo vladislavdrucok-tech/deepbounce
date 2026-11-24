@@ -1,4 +1,4 @@
-# Deep Bounce 1.2.1
+# Deep Bounce 1.2.2
 
 Гра для Android на Godot 4.5.1 (GDScript, рендерер Compatibility / OpenGL ES 3).
 Проводиш пальцем, відпускаєш — гармата вгорі випускає серію кульок униз, вони рикошетять від стін і каміння,
@@ -8,6 +8,9 @@
 **Нове в 1.1:** режим «Рівні» (50 рівнів, 5 розділів, зірки), «Нескінченний режим», магазин (кульки, гармати,
 «Без реклами») з Google Play Billing, «Підтримка автора», реклама AdMob з UMP (друга спроба й подвоєння кристалів
 за відео, interstitial між забігами з обмеженнями), 12 мов.
+
+**1.2.2:** виправлення попереджень Android 15/16 у Play Console (edge-to-edge без застарілих API, безпечна зона
+під системні панелі й виріз, зміна розміру й орієнтації на великих екранах) — [`docs/RELEASE_1.2.2_UA.md`](docs/RELEASE_1.2.2_UA.md).
 
 Готові збірки: [`../builds/DeepBounce-1.2.1.apk`](../builds/DeepBounce-1.2.1.apk) (встановлення на телефон,
 ставиться поверх 1.0–1.0.3 зі збереженням прогресу) і [`../builds/DeepBounce-1.2.1.aab`](../builds/DeepBounce-1.2.1.aab)
@@ -78,12 +81,12 @@ export ANDROID_HOME=/шлях/до/android-sdk
 export GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/шлях/до/deep_bounce_release.jks
 export GODOT_ANDROID_KEYSTORE_RELEASE_USER=deepbounce
 export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=...
-tools/android/build_release.sh both        # build/DeepBounce-1.2.1.apk і build/DeepBounce-1.2.1.aab
-apksigner verify --print-certs build/DeepBounce-1.2.1.apk
+tools/android/build_release.sh both        # build/DeepBounce-1.2.2.apk і build/DeepBounce-1.2.2.aab
+apksigner verify --print-certs build/DeepBounce-1.2.2.apk
 ```
 
-Пресет «Android» у `export_presets.cfg`: пакет `com.deepbounce.game`, версія 1.2.1 (code 8), target API 36,
-портрет, arm64-v8a і x86_64, адаптивна іконка. Плагіни: `addons/GodotGooglePlayBilling` (офіційний, Billing
+Пресет «Android» у `export_presets.cfg`: пакет `com.deepbounce.game`, версія 1.2.2 (code 9), target API 36,
+портрет на телефонах, будь-яка орієнтація на планшетах/складаних (див. [`docs/RELEASE_1.2.2_UA.md`](docs/RELEASE_1.2.2_UA.md)), arm64-v8a і x86_64, адаптивна іконка. Плагіни: `addons/GodotGooglePlayBilling` (офіційний, Billing
 Library 9.1.0) і власний `addons/DeepBounceAds` (Google Mobile Ads 24.9.0 + UMP 3.2.0; вихідний код —
 `android_plugins/deepbounce-ads`, збірка: `cd android_plugins/deepbounce-ads && gradle assemble`).
 Перед публікацією впишіть реальні ID AdMob і ключ ліцензування Play у `config/monetization.cfg`
