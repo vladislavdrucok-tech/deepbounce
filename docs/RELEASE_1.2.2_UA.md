@@ -7,21 +7,28 @@
 ## 1. Попередження Android 16 у Play Console
 
 ### «Використання застарілих edge-to-edge API або параметрів»
-**Причина.** Рушій Godot 4.5.1 вмикав повноекранний (immersive) режим через `WindowCompat.setDecorFitsSystemWindows`
-→ `Window#setDecorFitsSystemWindows`, який Android 15 позначив як застарілий і вимкнений.
+**Причина.** Шаблонна активність Godot 4.5.1 (`GodotApp.java`) під час кожного повернення в гру й після старту
+рушія примусово викликала `Godot.enableImmersiveMode(..., true)` і `enableEdgeToEdge(..., true)` →
+`WindowCompat.setDecorFitsSystemWindows` → `Window#setDecorFitsSystemWindows`, а під час запуску ще й
+`androidx.activity.EdgeToEdge.enable()`, що задає застарілі кольори панелей (`setStatusBarColor`,
+`setNavigationBarColor`). Android 15 позначив ці методи як застарілі й вимкнені.
 
 **Що зроблено.**
-- В експорті вимкнено вбудований immersive-режим Godot (`screen/immersive_mode=false`, `screen/edge_to_edge=false`):
-  рушій більше не викликає застарілий метод (у коді Godot виклик відбувається лише при зміні цього режиму).
-- Системні панелі ховає плагін гри `DeepBouncePlay` через незастарілий `WindowInsetsControllerCompat.hide(systemBars())`
-  (свайп від краю показує їх тимчасово). Гра завжди малює від краю до краю, як вимагає Android 15+.
-- Плагін повідомляє грі реальні відступи (видимі системні панелі + виріз камери), і `scripts/main.gd` розміщує
-  поле та всі кнопки всередині безпечної зони; відступи перечитуються при поверненні з реклами/Google Play і
-  раз на секунду (панелі можуть з'явитися без зміни розміру вікна).
+- Власна активність `tools/android/template/GodotApp.java` (скрипт збірки кладе її замість шаблонної):
+  без `EdgeToEdge.enable()` і без `enableImmersiveMode/enableEdgeToEdge`; системні панелі ховаються лише через
+  незастарілий `WindowInsetsControllerCompat.hide(systemBars())` (свайп від краю показує їх тимчасово) — під час
+  запуску, повернення в гру й отримання фокусу. Android 15+ сам малює застосунок від краю до краю.
+- В експорті вимкнено вбудований immersive-режим Godot (`screen/immersive_mode=false`, `screen/edge_to_edge=false`).
+- Плагін гри `DeepBouncePlay` повідомляє реальні відступи (видимі системні панелі + виріз камери), і
+  `scripts/main.gd` розміщує поле та всі кнопки всередині безпечної зони; відступи перечитуються при поверненні з
+  реклами/Google Play і раз на секунду (панелі можуть з'явитися без зміни розміру вікна).
+- Знайдено на емуляторі: у першій збірці 1.2.2 шаблонна активність знову показувала панелі одразу після того, як
+  плагін їх ховав, — саме так виявилась справжня причина.
 
 **Що може лишитися у звіті Play.** Самі бібліотеки Google та AndroidX усе ще *містять* такі виклики для старих
 версій Android (перевірено навіть найновіші: `androidx.core` 1.19.1, `androidx.activity` 1.13.0,
-`core-splashscreen` 1.2.0; також внутрішній код Google Mobile Ads). Гра їх не викликає, але Play аналізує код
+`core-splashscreen` 1.2.0; також внутрішній код Google Mobile Ads і бібліотеки Godot — `Godot.enableImmersiveMode`,
+який тепер ніхто не викликає). Гра цих шляхів не запускає, але Play аналізує код
 статично і може й далі показувати ці місця з позначкою відповідних бібліотек. Це рекомендація, а не блокування
 публікації; повністю зникне після оновлень цих бібліотек і рушія Godot. Google Mobile Ads 25.x вимагає новішого
 Kotlin, ніж шаблон збірки Godot 4.5.1, тому SDK лишився 24.9.0.
@@ -30,7 +37,7 @@ Kotlin, ніж шаблон збірки Godot 4.5.1, тому SDK лишивс�
 **Причина.** У маніфесті було `android:screenOrientation="portrait"`.
 
 **Що зроблено.**
-- Маніфест більше не фіксує орієнтацію (Godot: `window/handheld/orientation=6` → `fullSensor`), активність
+- Маніфест більше не фіксує орієнтацію (Godot: `window/handheld/orientation=6` → `fullUser`), активність
   `resizeableActivity=true`.
 - Під час запуску гра визначає розмір екрана за правилом Android (найменша сторона ≥ 600 dp): на **телефонах**
   просить портрет (`SCREEN_SENSOR_PORTRAIT`), на **планшетах, розкладених складаних і у вікнах** дозволяє будь-яку

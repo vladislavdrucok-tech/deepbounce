@@ -32,6 +32,10 @@ prepare_template() {
 		grep -q "android.suppressUnsupportedCompileSdk" android/build/gradle.properties || \
 			echo "android.suppressUnsupportedCompileSdk=36" >> android/build/gradle.properties
 	fi
+	# Activity without the deprecated edge-to-edge calls of the stock template (see the file's header)
+	if [ -d android/build/src/com/godot/game ]; then
+		cp tools/android/template/GodotApp.java android/build/src/com/godot/game/GodotApp.java
+	fi
 }
 
 export_one() {   # $1 = 0 (apk) / 1 (aab), $2 = output path
