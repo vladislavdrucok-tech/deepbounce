@@ -5,6 +5,7 @@ signal signed_in(ok: bool, error: String)
 signal score_submitted(id: String, ok: bool, error: String)
 signal leaderboard_closed(shown: bool, error: String)
 signal review_finished(ok: bool, error: String)
+signal insets_changed(left: int, top: int, right: int, bottom: int)
 
 var auth_ok := true            # false: the player is not signed in to Play Games
 var network_ok := true
@@ -46,3 +47,9 @@ func request_review() -> void:
 
 func open_store_page() -> void:
 	store_pages += 1
+
+func set_immersive(_on: bool) -> void:
+	pass
+
+func refresh_insets() -> void:
+	pass

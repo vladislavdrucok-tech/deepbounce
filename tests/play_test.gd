@@ -79,5 +79,18 @@ func _ready() -> void:
 	var html := FileAccess.get_file_as_string("res://site/index.html")
 	ok(html.contains("<html lang=\"en\">") and not html.contains("lang=\"uk\"") and html.contains("Deep Bounce") and html.contains("November 13, 2026"),
 		"policy source is English only, with developer and date filled in")
+	# safe area: visible system bars and a display cutout are kept clear of the layout
+	var M := load("res://scripts/main.gd")
+	var vp := Vector2(720, 1600)
+	var win := Vector2(1080, 2400)
+	var full := Rect2i(0, 0, 1080, 2400)
+	var r1: Rect2 = M.safe_rect_for(vp, win, full, Vector4i(0, 0, 0, 0))
+	ok(r1 == Rect2(0, 0, 720, 1600), "bars hidden: the whole screen is used", str(r1))
+	var r2: Rect2 = M.safe_rect_for(vp, win, full, Vector4i(0, 96, 0, 63))
+	ok(is_equal_approx(r2.position.y, 64.0) and is_equal_approx(r2.end.y, 1558.0), "status bar and navigation bar visible: layout starts below and ends above them", str(r2))
+	var r3: Rect2 = M.safe_rect_for(Vector2(1600, 1000), Vector2(2400, 1500), Rect2i(120, 0, 2280, 1500), Vector4i(0, 0, 0, 0))
+	ok(is_equal_approx(r3.position.x, 80.0), "landscape with a camera cutout on the side: the cutout is avoided", str(r3))
+	var r4: Rect2 = M.safe_rect_for(vp, win, full, Vector4i(-1, -1, -1, -1))
+	ok(r4 == Rect2(0, 0, 720, 1600), "insets not reported yet: Godot's safe area alone")
 	print("PLAY " + ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit(1 if fails > 0 else 0)

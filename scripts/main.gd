@@ -76,6 +76,8 @@ func _ready() -> void:
 		flying_gems = maxi(0, flying_gems - n)
 		G.sfx("gem", -8.0, randf_range(0.95, 1.1), 40))
 	get_viewport().size_changed.connect(_layout)
+	Play.insets_changed.connect(_layout)
+	_setup_screen()
 	G.lang_changed.connect(_on_lang)
 	G.profile_changed.connect(_on_profile)
 	Store.purchase_result.connect(_on_purchase_result)
@@ -145,16 +147,49 @@ static func chapter_of(lv: Dictionary) -> int:
 
 # ---------------------------------------------------------------- layout
 
+static func is_large_screen() -> bool:
+	## Android's own threshold for large screens: smallest width >= 600 dp (tablets, unfolded foldables,
+	## desktop windows). Phones stay portrait; large screens may rotate and resize freely.
+	var px := Vector2(DisplayServer.screen_get_size())
+	var dpi := float(DisplayServer.screen_get_dpi())
+	if dpi <= 0.0:
+		return false
+	return minf(px.x, px.y) * 160.0 / dpi >= 600.0
+
+func _setup_screen() -> void:
+	if OS.get_name() != "Android":
+		return
+	# The manifest no longer locks the orientation (Android 16 ignores such locks on large screens anyway):
+	# portrait is requested at run time on phones only.
+	if is_large_screen():
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR)
+	else:
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_PORTRAIT)
+	Play.set_immersive(true)
+
+func safe_rect(vp: Vector2) -> Rect2:
+	## The part of the window not covered by visible system bars or a display cutout, in viewport units.
+	var win := Vector2(DisplayServer.window_get_size())
+	if not OS.has_feature("mobile") or win.x <= 0:
+		return Rect2(Vector2.ZERO, vp)
+	return safe_rect_for(vp, win, DisplayServer.get_display_safe_area(), Play.insets)
+
+static func safe_rect_for(vp: Vector2, win: Vector2, sa: Rect2i, ins: Vector4i) -> Rect2:
+	## vp: viewport size; win: window size in pixels; sa: Godot's safe area (pixels); ins: plugin insets
+	## (left, top, right, bottom in pixels, x < 0 = unknown).
+	var safe := Rect2(Vector2.ZERO, vp)
+	var f := vp / win
+	if sa.size.x > 0 and sa.size.y > 0:
+		safe = safe.intersection(Rect2(Vector2(sa.position) * f, Vector2(sa.size) * f))
+	if ins.x >= 0:
+		safe = safe.intersection(Rect2(Vector2(ins.x, ins.y) * f, (win - Vector2(ins.x + ins.z, ins.y + ins.w)) * f))
+	if safe.size.x < 100 or safe.size.y < 100:
+		safe = Rect2(Vector2.ZERO, vp)
+	return safe
+
 func _layout() -> void:
 	var vp := get_viewport().get_visible_rect().size
-	var safe := Rect2(Vector2.ZERO, vp)
-	var win := Vector2(DisplayServer.window_get_size())
-	if OS.has_feature("mobile") and win.x > 0:
-		var sa := DisplayServer.get_display_safe_area()
-		var f := vp / win
-		safe = Rect2(Vector2(sa.position) * f, Vector2(sa.size) * f).intersection(Rect2(Vector2.ZERO, vp))
-		if safe.size.x < 100 or safe.size.y < 100:
-			safe = Rect2(Vector2.ZERO, vp)
+	var safe := safe_rect(vp)
 	var s := minf(safe.size.x / 720.0, safe.size.y / 1280.0)
 	layout_scale = s
 	layout_origin = Vector2(safe.position.x + (safe.size.x - 720.0 * s) * 0.5, safe.position.y)

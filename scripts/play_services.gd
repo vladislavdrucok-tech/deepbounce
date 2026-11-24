@@ -9,6 +9,13 @@ extends Node
 
 signal changed
 signal leaderboards_result(shown: bool)
+signal insets_changed
+
+## Full screen (Android 15/16 edge-to-edge): the game draws behind the system bars; the bars are hidden by the
+## plugin without deprecated window APIs; `insets` = visible system bars + display cutout in window pixels
+## (-1 = not reported yet, e.g. on desktop), used by main.gd to keep the interface clear of them.
+var insets := Vector4i(-1, -1, -1, -1)
+var _insets_poll := 0.0
 
 const AndroidPlay := preload("res://scripts/play_android.gd")
 const FakePlay := preload("res://scripts/play_fake.gd")
@@ -40,10 +47,33 @@ func use_backend(b: Node) -> void:
 	b.score_submitted.connect(_on_score)
 	b.leaderboard_closed.connect(_on_leaderboard)
 	b.review_finished.connect(func(ok, err): G.diag("[play] review flow %s %s" % ["ran" if ok else "failed", err]))
+	b.insets_changed.connect(_on_insets)
 	started = false
 	signed = false
 	_want_show = false
 	_pending = {}
+
+func _on_insets(l: int, t: int, r: int, b: int) -> void:
+	var v := Vector4i(l, t, r, b)
+	if v != insets:
+		insets = v
+		insets_changed.emit()
+
+func set_immersive(on: bool) -> void:
+	backend.set_immersive(on)
+
+func _process(dt: float) -> void:
+	# bars can appear (swipe, keyboard, split screen) without a window resize: re-read the insets now and then
+	if OS.get_name() != "Android":
+		return
+	_insets_poll += dt
+	if _insets_poll > 1.0:
+		_insets_poll = 0.0
+		backend.refresh_insets()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and OS.get_name() == "Android" and backend:
+		backend.set_immersive(true)
 
 func board(kind: String) -> String:
 	return String(cfg.get_value("play_games", "leaderboard_" + kind, ""))

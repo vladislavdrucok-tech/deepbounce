@@ -9,6 +9,7 @@ val pluginPackageName = "com.deepbounce.play"
 // Keep these two in sync with addons/DeepBouncePlay/export_plugin.gd (_get_android_dependencies)
 val gamesVersion = "21.0.0"
 val reviewVersion = "2.0.2"
+val coreVersion = "1.13.1"
 
 android {
     namespace = pluginPackageName
@@ -34,6 +35,7 @@ dependencies {
     compileOnly("org.godotengine:godot:4.5.1.stable")
     implementation("com.google.android.gms:play-services-games-v2:$gamesVersion")
     implementation("com.google.android.play:review:$reviewVersion")
+    implementation("androidx.core:core:$coreVersion")
 }
 
 val copyAars by tasks.registering(Copy::class) {
