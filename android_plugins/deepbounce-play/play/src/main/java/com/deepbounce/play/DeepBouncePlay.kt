@@ -128,6 +128,13 @@ class DeepBouncePlay(godot: Godot) : GodotPlugin(godot) {
         if (immersive.get()) ui { act -> applyImmersive(act) } else ui { act -> readInsets(act) }
     }
 
+    /**
+     * Android's own smallest-width of the current configuration in dp (the large-screen rule is >= 600 dp).
+     * Always current after a fold/unfold, a display change or a density change; -1 when unknown.
+     */
+    @UsedByGodot
+    fun smallestWidthDp(): Int = activity?.resources?.configuration?.smallestScreenWidthDp ?: -1
+
     // ---------------------------------------------------------------- Play Games
 
     @UsedByGodot

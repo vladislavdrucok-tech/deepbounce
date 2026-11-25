@@ -40,3 +40,6 @@ func set_immersive(on: bool) -> void:
 
 func refresh_insets() -> void:
 	p.refreshInsets()
+
+func smallest_width_dp() -> int:
+	return int(p.smallestWidthDp())

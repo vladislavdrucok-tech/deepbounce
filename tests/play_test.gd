@@ -100,6 +100,9 @@ func _ready() -> void:
 	ok(M.large_for(Vector2(1600, 2560), Vector2(1600, 2560), 320.0), "tablet 1600x2560 @320 dpi (800 dp) is a large screen")
 	ok(M.large_for(Vector2(1080, 2400), Vector2(2208, 1840), 420.0), "unfolded foldable: the new window size counts even if the screen size lags")
 	ok(not M.large_for(Vector2(1080, 2280), Vector2(1080, 2280), 440.0), "folded again (outer screen 393 dp): portrait again")
+	ok(Play.smallest_width_dp() == -1 and M.is_large_screen() == M.large_for(Vector2(DisplayServer.screen_get_size()),
+		Vector2(DisplayServer.window_get_size()), float(DisplayServer.screen_get_dpi())),
+		"without Android's smallest width the size/dpi fallback decides")
 	ok(M.wanted_orientation(false) == DisplayServer.SCREEN_SENSOR_PORTRAIT and M.wanted_orientation(true) == DisplayServer.SCREEN_SENSOR,
 		"phones ask for portrait, large screens (sw >= 600 dp) may rotate")
 	var act := FileAccess.get_file_as_string("res://tools/android/template/GodotApp.java")

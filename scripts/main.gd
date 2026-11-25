@@ -151,6 +151,9 @@ static func chapter_of(lv: Dictionary) -> int:
 static func is_large_screen() -> bool:
 	## Android's own threshold for large screens: smallest width >= 600 dp (tablets, unfolded foldables,
 	## desktop windows). Phones stay portrait; large screens may rotate and resize freely.
+	var sw := Play.smallest_width_dp()
+	if sw > 0:
+		return sw >= 600        # Android's own value: always current (Godot's dpi can lag after a change)
 	return large_for(Vector2(DisplayServer.screen_get_size()), Vector2(DisplayServer.window_get_size()),
 		float(DisplayServer.screen_get_dpi()))
 
@@ -182,8 +185,8 @@ func _update_orientation() -> void:
 	if want != _orientation:
 		_orientation = want
 		DisplayServer.screen_set_orientation(want)
-		G.diag("[screen] %s: screen %s, window %s, %d dpi -> %s" % ["large" if large else "phone",
-			DisplayServer.screen_get_size(), DisplayServer.window_get_size(), DisplayServer.screen_get_dpi(),
+		G.diag("[screen] %s: smallest width %d dp, screen %s, window %s, %d dpi -> %s" % ["large" if large else "phone",
+			Play.smallest_width_dp(), DisplayServer.screen_get_size(), DisplayServer.window_get_size(), DisplayServer.screen_get_dpi(),
 			"any orientation" if large else "portrait"])
 
 func safe_rect(vp: Vector2) -> Rect2:

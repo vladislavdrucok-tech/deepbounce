@@ -62,6 +62,10 @@ func _on_insets(l: int, t: int, r: int, b: int) -> void:
 func set_immersive(on: bool) -> void:
 	backend.set_immersive(on)
 
+func smallest_width_dp() -> int:
+	## Android's own smallest width in dp (live after fold/unfold or a display change); -1 when unknown.
+	return backend.smallest_width_dp() if backend else -1
+
 func _process(dt: float) -> void:
 	# bars can appear (swipe, keyboard, split screen) without a window resize: re-read the insets now and then
 	if OS.get_name() != "Android":
