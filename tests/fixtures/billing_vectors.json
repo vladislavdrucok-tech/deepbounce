@@ -1,0 +1,17 @@
+{
+ "comment": "Known-answer vectors made with OpenSSL (openssl dgst -sha1 -sign = SHA1withRSA, PKCS#1 v1.5), the scheme Google Play uses for Purchase.originalJson. Throw-away test key: only the PUBLIC key is stored; the private key was deleted after signing.",
+ "public_key_b64": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0YB5HO9QtIAMPfuuJ4G9055EODcaGHkId57ndP+H1Mi6KTtMlGKUvwO/h18+2xgY8QfsyvspcMSWLadO42/Xewl5d0HqSECm6kMr2F3wvcXYInrHzS8PvrwCTeYnDjnJuklyraQ7ng1Yx5cOua+YDbWcpJP0VxDN63kA+edneujZO3qnIn4qef7Gi+a0tBB6b6GXY7pfCeJEMEXIVUR+TTPkJR6GSJQ2gjZ3vE0zQptrtuRapvyleRsU0h71qWqjMGlYfhUnvSN5EUUvQ1DsXvYPMjdGYvfing4brLuJaN5ZTyD3An6WrpX/VrnZUgihAgpx/ocpFl29CemC0p93EwIDAQAB",
+ "purchased": {
+  "original_json": "{\"orderId\":\"GPA.3398-4511-2290-17734\",\"packageName\":\"com.deepbounce.game\",\"productId\":\"db_no_ads\",\"purchaseTime\":1764062400000,\"purchaseState\":0,\"purchaseToken\":\"kdmjeahpgfnbblkcfhkpojnm.AO-J1Oy2aQ3Wq9X0test\",\"quantity\":1,\"acknowledged\":false}",
+  "signature_sha1": "wXfVeVgW5GfnApExdhkLVJXHvxaUQvuHS4yjuxSXaKnvHyl/Poo+hTZmJWtCyABQYyjWmcznxcJuMjMqDzRSf20DZcTCllRyzmYFJ0CNx33IKO0klrEl3UIztlRzlrGr5gAFUyBau7456f8U4cON8hC6gzk4Z51kYbh9gOGC0RCJFt/5Zp0cqihCctKiOP68rnfN/shH1fllD1RaxK8eoSYCRB8pM5YZjiEsH+8ag302xYx/wrTFtWOHPlKzUWoqKwFz7LI/tvI85h8xLuDHQfpxUIem099PIgtAaosgNV7bmvqK/pimfdI/pHijkZRhKnka2ZKcbaS/KqXe2SoKjg==",
+  "signature_sha256": "jojPSv6YVjT6OZiXJCPjZjHY8mlrpOfHybNmGUWMMnmC9Ge+rqab9TOKpXcb11iKG0chjzuPuWM/GfOxVV3R2Id7TflnpYQH5gwlOAZhRodyLw0yPzpY+MRKLADnbabvRo7GojoUdXuZKV+8Nr9dX1YXJvvGDlk7wpt2+1b7XhG0IkwJEevgs6zunPrrLH6beqBqF9tO+g6GOilyoQcKE0h0r53a5lskbTwxaxHE81wN6rrtJ+Bm6/63Ux/gRn94KIWMucFUkycgN0qbA16TLp4jk9QPzXyUIxi8Fq/tCxxJMoam80LbTXXY3wcIKPf6gao4QjEN45NqoIVdJ28FvQ=="
+ },
+ "pending": {
+  "original_json": "{\"orderId\":\"GPA.3398-4511-2290-17735\",\"packageName\":\"com.deepbounce.game\",\"productId\":\"db_support_large\",\"purchaseTime\":1764062500000,\"purchaseState\":4,\"purchaseToken\":\"pendingtokenexample.AO-J1Oz9pending\",\"quantity\":1,\"acknowledged\":false}",
+  "signature_sha1": "p/VTLyK78Ypfs5aTEKmL54LTgblvrH+EiQZVHO5j+wCfHR7kpyDfr8xaKdFJ6jow+jnSn9Raqj27S5ufNedBkzkGICudWHyPhuvzcePsCYh6J441Qyp7CxteTLB9SQpPO82XLsarGeIotgY5xdJsMEGThch8WKifH+luKxOPJdfqoCTp5nOQmrURSqX93cwcCkcCIY9WYzbeP39NQQE3wYjf5AdtkwFeLkUV8d7okg8j4DrUjDD964VKToZXzWXeUorCM+VFkMpgrNBf1nkhFVEid/ncyY1dPnFIKtuPFN5pqu5uagxGaED+hCenDBcpQN3REEyyhyKaIbEERG5YLA=="
+ },
+ "utf8": {
+  "original_json": "{\"orderId\":\"GPA.3398-4511-2290-17736\",\"packageName\":\"com.deepbounce.game\",\"productId\":\"db_ball_obsidian\",\"purchaseTime\":1764062600000,\"purchaseState\":0,\"purchaseToken\":\"utf8tokenexample.AO-J1Ox\",\"quantity\":1,\"acknowledged\":true,\"developerPayload\":\"Камінь — ✓\"}",
+  "signature_sha1": "oRrHy6UjIPplwyWtuEPdVk/eYHDxLCAKkwi6eKSxFj8QoeszZOWhnPS7pDGlJI7OP9+ZYf2lxLCBShCej/WuB+ICBV3yEJdHwd4j9VY91dJBu7Rpfpy+TujBKF1EyRD38acZK9ATj7gN8yAEPJew39QtqLb7jGbr5+afUxkWlzBYkomULKEDkffxGsR4JHf03ox6cMLnyPeEpZ+NPD6yE56QkmFo+/ymZM2hxG5XFKOx/7sfDQqTWKjwDwjjiNnpUu6oEee7G+PkkUGia3SqC9qIbHMPJrIjYWn7FNYd27kTPJ5w2iCyRIBGGJ6QmU4zRyiKoXWuq1N+iESPg7mxbA=="
+ }
+}

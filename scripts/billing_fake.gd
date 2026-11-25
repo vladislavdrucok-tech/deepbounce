@@ -23,6 +23,7 @@ var fail_ack_once := false
 var fail_consume_once := false
 var account := {}                  # token -> purchase (lives in the "Google account", survives reinstall)
 var calls := {"details": 0, "purchases": 0, "launch": 0, "ack": 0, "consume": 0}
+var sign_key: CryptoKey = null     # tests: sign purchases like Google Play (SHA1withRSA over originalJson)
 var _seq := 0
 
 func _later(f: Callable) -> void:
@@ -66,10 +67,23 @@ func query_purchases() -> void:
 func _make(pid: String, state: int) -> Dictionary:
 	_seq += 1
 	var token := "tok_%s_%d_%d" % [pid, _seq, randi() % 100000]
-	return {"order_id": "GPA.%04d" % _seq, "purchase_token": token, "package_name": "com.deepbounce.game",
+	var pu := {"order_id": "GPA.%04d" % _seq, "purchase_token": token, "package_name": "com.deepbounce.game",
 		"purchase_state": state, "purchase_time": int(Time.get_unix_time_from_system() * 1000),
-		"original_json": JSON.stringify({"productId": pid, "purchaseToken": token}), "is_acknowledged": false,
+		"original_json": "", "is_acknowledged": false,
 		"is_auto_renewing": false, "is_suspended": false, "quantity": 1, "signature": "", "product_ids": [pid]}
+	_seal(pu)
+	return pu
+
+func _seal(pu: Dictionary) -> void:
+	## originalJson in Google's shape (purchaseState 0 = purchased, 4 = pending) and, with a test key, its
+	## SHA1withRSA signature — re-made whenever Google Play would hand out an updated purchase.
+	var js := JSON.stringify({"orderId": pu.order_id, "packageName": pu.package_name, "productId": pu.product_ids[0],
+		"purchaseTime": pu.purchase_time, "purchaseState": 4 if int(pu.purchase_state) == 2 else 0,
+		"purchaseToken": pu.purchase_token, "quantity": 1, "acknowledged": bool(pu.is_acknowledged)})
+	pu.original_json = js
+	pu.signature = ""
+	if sign_key:
+		pu.signature = Marshalls.raw_to_base64(Crypto.new().sign(HashingContext.HASH_SHA1, js.sha1_buffer(), sign_key))
 
 func launch(pid: String) -> Dictionary:
 	calls.launch += 1
@@ -98,6 +112,7 @@ func approve_pending() -> void:
 	for t in account:
 		if int(account[t].purchase_state) == 2:
 			account[t].purchase_state = 1
+			_seal(account[t])
 
 func cancel_pending() -> void:
 	for t in account.keys():
@@ -118,6 +133,7 @@ func acknowledge(token: String) -> void:
 			return
 		if account.has(token):
 			account[token].is_acknowledged = true
+			_seal(account[token])
 		ack_response.emit({"response_code": 0, "debug_message": "", "token": token}))
 
 func consume(token: String) -> void:

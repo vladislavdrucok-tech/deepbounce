@@ -1,8 +1,8 @@
 extends Node
 ## Google Play purchases (autoload "Store").
 ## Rules (Google Play Billing, one-time products):
-##  * an item is granted only for a purchase in state PURCHASED whose signature checks out (when the licence key
-##    is configured); PENDING shows "waiting" and is checked again when the app returns to the foreground;
+##  * an item is granted only for a purchase in state PURCHASED whose signature (SHA1withRSA over originalJson)
+##    and signed contents check out (when the licence key is configured — without it nothing can be verified); PENDING shows "waiting" and is checked again when the app returns to the foreground;
 ##  * handling is idempotent per purchaseToken: the grant and its ledger entry are written in one save, a repeated
 ##    callback, a double tap or a restart never grants twice;
 ##  * permanent items are acknowledged after delivery (retried on every start until Google Play confirms, so the
@@ -280,21 +280,59 @@ func _on_purchase_updated(resp: Dictionary) -> void:
 # ---------------------------------------------------------------- the ledger
 
 static func verify_signature(original_json: String, signature_b64: String, key_b64: String) -> bool:
-	## Google Play signs originalJson with the app's licence key (RSA, SHA-256).
-	if key_b64 == "" or signature_b64 == "":
+	## Google Play signs Purchase.originalJson (its exact UTF-8 bytes) with the app's licence key (Play Console →
+	## Monetization setup → Licensing, Base64 X.509 RSA public key): RSA PKCS#1 v1.5 with SHA-1, "SHA1withRSA" in
+	## Google's Security.java samples. SHA-256 with the same key is accepted as well, in case Google moves to it.
+	if key_b64 == "" or signature_b64 == "" or original_json == "":
 		return false
 	var body := ""
-	var k := key_b64.strip_edges().replace("\n", "")
+	var k := key_b64.strip_edges().replace("\n", "").replace("\r", "").replace(" ", "")
 	for i in range(0, k.length(), 64):
 		body += k.substr(i, 64) + "\n"
 	var pem := "-----BEGIN PUBLIC KEY-----\n" + body + "-----END PUBLIC KEY-----\n"
 	var key := CryptoKey.new()
 	if key.load_from_string(pem, true) != OK:
 		return false
-	var sig := Marshalls.base64_to_raw(signature_b64)
+	var sig := Marshalls.base64_to_raw(signature_b64.strip_edges())
 	if sig.is_empty():
 		return false
-	return Crypto.new().verify(HashingContext.HASH_SHA256, original_json.sha256_buffer(), sig, key)
+	var c := Crypto.new()
+	if c.verify(HashingContext.HASH_SHA1, original_json.sha1_buffer(), sig, key):
+		return true
+	return c.verify(HashingContext.HASH_SHA256, original_json.sha256_buffer(), sig, key)
+
+static func check_purchase(p: Dictionary, key_b64: String) -> String:
+	## "" when the purchase may be trusted, otherwise why not. Without a licence key nothing can be checked ("").
+	## With a key: the signature must verify, and the signed JSON must describe this very purchase — same token,
+	## same package, the same products, and a pending payment must not be presented as completed.
+	if key_b64 == "":
+		return ""
+	var js := String(p.get("original_json", ""))
+	if not verify_signature(js, String(p.get("signature", "")), key_b64):
+		return "signature"
+	var d = JSON.parse_string(js)
+	if not (d is Dictionary):
+		return "json"
+	if d.has("packageName") and String(d.packageName) != PACKAGE:
+		return "package"
+	if String(d.get("purchaseToken", "")) != String(p.get("purchase_token", "")):
+		return "token"
+	var signed_ids: Array = []
+	if d.get("productIds", null) is Array:
+		for x in d.productIds:
+			signed_ids.append(String(x))
+	if d.has("productId"):
+		signed_ids.append(String(d.productId))
+	var ids: Array = p.get("product_ids", [])
+	if ids.is_empty():
+		return "product"
+	for pid in ids:
+		if not signed_ids.has(String(pid)):
+			return "product"
+	# originalJson "purchaseState": 0 = purchased, 4 = pending (Purchase.getPurchaseState() maps 4 to PENDING)
+	if int(d.get("purchaseState", 0)) == 4 and int(p.get("purchase_state", 0)) != PENDING:
+		return "state"
+	return ""
 
 func _handle(p: Dictionary, interactive: bool) -> void:
 	var token := String(p.get("purchase_token", ""))
@@ -304,10 +342,12 @@ func _handle(p: Dictionary, interactive: bool) -> void:
 	if pkg != PACKAGE:
 		_log("ignored purchase for another package %s" % pkg)
 		return
-	if license_key != "" and not verify_signature(String(p.get("original_json", "")), String(p.get("signature", "")), license_key):
-		_log("signature check FAILED for %s, nothing granted" % token.left(12))
-		for pid in p.get("product_ids", []):
-			purchase_result.emit(String(pid), "error")
+	var bad := check_purchase(p, license_key)
+	if bad != "":
+		_log("purchase check FAILED (%s) for %s, nothing granted" % [bad, token.left(12)])
+		if interactive:
+			for pid in p.get("product_ids", []):
+				purchase_result.emit(String(pid), "error")
 		return
 	var st := int(p.get("purchase_state", 0))
 	for pid_v in p.get("product_ids", []):

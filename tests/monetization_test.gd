@@ -204,24 +204,7 @@ func billing_tests() -> void:
 	Store.buy("db_ball_frost")
 	await wait(0.3)
 	ok(last_status("db_ball_frost") == "unavailable" or last_status("db_ball_frost") == "error", "buying then reports the problem instead of hanging", last_status("db_ball_frost"))
-	# signature verification with a real RSA key pair
-	var crypto := Crypto.new()
-	var key := crypto.generate_rsa(2048)
-	var pem := key.save_to_string(true)
-	var b64 := pem.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replace("\n", "").strip_edges()
-	var js := '{"orderId":"GPA.1","productId":"db_no_ads","purchaseToken":"abc","purchaseState":0}'
-	var sig := Marshalls.raw_to_base64(crypto.sign(HashingContext.HASH_SHA256, js.sha256_buffer(), key))
-	ok(Store.verify_signature(js, sig, b64) and not Store.verify_signature(js.replace("db_no_ads", "db_ball_obsidian"), sig, b64),
-		"purchase signature check: genuine passes, edited JSON fails")
-	var f3: Node = new_store()
-	Store.license_key = b64
-	fresh_profile()
-	Store.start()
-	await wait(0.3)
-	Store.buy("db_ball_obsidian")       # the fake signs nothing: must be rejected with a key configured
-	await wait(0.5)
-	ok(not G.owns("ball", "obsidian"), "with a licence key, a purchase without a valid signature grants nothing")
-	Store.license_key = ""
+	await signature_tests()
 	new_store()
 
 # ---------------------------------------------------------------- ads
@@ -378,3 +361,108 @@ func admob_config_tests() -> void:
 		"production mode: revive → revive unit, double → double unit, interstitial → interstitial unit")
 	Ads.cfg.set_value("admob", "use_test_ads", saved)
 	ok(Ads.test_ads(), "test mode restored")
+
+func signature_tests() -> void:
+	## Known-answer vectors made outside Godot (OpenSSL SHA1withRSA, cross-checked with Java's
+	## Signature.getInstance("SHA1withRSA") — the scheme of Google's Security.java samples).
+	var v: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/billing_vectors.json"))
+	var key: String = v.public_key_b64
+	for name in ["purchased", "pending", "utf8"]:
+		ok(Store.verify_signature(v[name].original_json, v[name].signature_sha1, key), "Google-format SHA1withRSA vector '%s' verifies" % name)
+	ok(Store.verify_signature(v.purchased.original_json, v.purchased.signature_sha256, key), "SHA256withRSA with the same key is also accepted")
+	var js: String = v.purchased.original_json
+	var sig: String = v.purchased.signature_sha1
+	ok(not Store.verify_signature(js.replace("db_no_ads", "db_ball_amber"), sig, key), "edited product id fails")
+	ok(not Store.verify_signature(js.replace('"purchaseState":0', '"purchaseState":4'), sig, key), "edited purchase state fails")
+	ok(not Store.verify_signature(js + " ", sig, key), "one extra byte fails")
+	ok(not Store.verify_signature(js, v.pending.signature_sha1, key), "another purchase's signature fails")
+	var other := Crypto.new().generate_rsa(2048).save_to_string(true).replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replace("\n", "")
+	ok(not Store.verify_signature(js, sig, other), "a different licence key fails")
+	ok(not Store.verify_signature(js, "", key) and not Store.verify_signature(js, "not base64 !!", key)
+		and not Store.verify_signature("", sig, key) and not Store.verify_signature(js, sig, "garbage"), "empty or malformed signature / key / JSON fail")
+	var spaced := ""
+	for i in range(0, key.length(), 64):
+		spaced += key.substr(i, 64) + "\n"
+	ok(Store.verify_signature(js, sig, spaced), "a licence key pasted with line breaks still works")
+	# the signed JSON must describe this purchase
+	var good := {"purchase_token": "kdmjeahpgfnbblkcfhkpojnm.AO-J1Oy2aQ3Wq9X0test", "product_ids": ["db_no_ads"], "purchase_state": 1,
+		"original_json": js, "signature": sig, "package_name": "com.deepbounce.game"}
+	ok(Store.check_purchase(good, key) == "", "matching purchase passes")
+	var t1 := good.duplicate(true); t1.purchase_token = "someone-elses-token"
+	ok(Store.check_purchase(t1, key) == "token", "genuine JSON reused for another token is rejected", Store.check_purchase(t1, key))
+	var t2 := good.duplicate(true); t2.product_ids = ["db_cannon_obsidian"]
+	ok(Store.check_purchase(t2, key) == "product", "genuine JSON reused for another product is rejected")
+	var pend := {"purchase_token": "pendingtokenexample.AO-J1Oz9pending", "product_ids": ["db_support_large"], "purchase_state": 1,
+		"original_json": v.pending.original_json, "signature": v.pending.signature_sha1}
+	ok(Store.check_purchase(pend, key) == "state", "a pending payment presented as completed is rejected")
+	pend.purchase_state = 2
+	ok(Store.check_purchase(pend, key) == "", "the same pending purchase reported as pending passes")
+	ok(Store.check_purchase(t1, "") == "", "no licence key: nothing can be checked (Closed Alpha only)")
+	# end to end with a key: the simulated Google Play signs like the real one
+	var priv := Crypto.new().generate_rsa(2048)
+	var pub := priv.save_to_string(true).replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replace("\n", "")
+	fresh_profile()
+	var f: Node = new_store()
+	f.sign_key = priv
+	Store.license_key = pub
+	Store.start()
+	await wait(0.3)
+	var gems_before := int(G.support.count)
+	for pid in CATALOG.product_ids():
+		f.next[pid] = "approve"
+		results.clear()
+		Store.buy(pid)
+		await wait(0.4)
+		ok(last_status(pid) == "granted", "signed purchase of %s is granted" % pid, last_status(pid))
+	var perm := 0
+	for pid in CATALOG.product_ids():
+		if CATALOG.product(pid).type == "permanent":
+			perm += 1
+			ok(G.ent.products.has(pid), "%s owned" % pid)
+	ok(int(G.support.count) - gems_before == 4, "the four support contributions are counted once each", str(int(G.support.count) - gems_before))
+	await wait(0.4)
+	var acked := 0
+	var consumed := 0
+	for tok in G.purchases:
+		var e: Dictionary = G.purchases[tok]
+		if CATALOG.product(e.pid).type == "permanent":
+			acked += 1 if e.acked else 0
+		else:
+			consumed += 1 if e.consumed else 0
+	ok(acked == perm and consumed == 4, "permanent items acknowledged, support items consumed", "%d/%d acked, %d/4 consumed" % [acked, perm, consumed])
+	# replay: Google Play reports the same purchases again (restart / restore) — nothing is granted twice
+	var count_before := int(G.support.count)
+	Store.restore()
+	await wait(0.4)
+	ok(int(G.support.count) == count_before and G.ent.products.size() == perm, "restore with signed purchases grants nothing twice")
+	# a forged copy: real signature, but the dictionary claims another product
+	results.clear()
+	fresh_profile()
+	var forged: Dictionary = f.account.values()[0].duplicate(true)
+	forged.product_ids = ["db_cannon_obsidian"]
+	Store._on_purchase_updated({"response_code": 0, "purchases": [forged]})
+	ok(not G.ent.products.has("db_cannon_obsidian") and last_status("db_cannon_obsidian") == "error", "forged purchase (signature of another item) grants nothing")
+	var unsigned: Dictionary = f.account.values()[0].duplicate(true)
+	unsigned.signature = ""
+	Store._on_purchase_updated({"response_code": 0, "purchases": [unsigned]})
+	ok(G.ent.products.is_empty(), "purchase without a signature grants nothing when a licence key is set")
+	# pending with a key: waits, then is granted once the payment completes
+	fresh_profile()
+	f = new_store()
+	f.sign_key = priv
+	Store.license_key = pub
+	Store.start()
+	await wait(0.3)
+	f.next["db_ball_frost"] = "pending"
+	Store.buy("db_ball_frost")
+	await wait(0.4)
+	ok(last_status("db_ball_frost") == "pending" and not G.owns("ball", "frost"), "signed pending purchase: nothing granted yet")
+	f.approve_pending()
+	Store._notification(NOTIFICATION_APPLICATION_FOCUS_IN)
+	await wait(0.4)
+	ok(G.owns("ball", "frost"), "after the payment completes (re-signed by Google Play) the item is granted")
+	f.refund("db_ball_frost")
+	Store.restore()
+	await wait(0.4)
+	ok(not G.owns("ball", "frost"), "refund confirmed by Google Play removes the item")
+	Store.license_key = ""
