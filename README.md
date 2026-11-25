@@ -85,7 +85,7 @@ tools/android/build_release.sh both        # build/DeepBounce-1.2.2.apk і build
 apksigner verify --print-certs build/DeepBounce-1.2.2.apk
 ```
 
-Пресет «Android» у `export_presets.cfg`: пакет `com.deepbounce.game`, версія 1.2.2 (code 9), target API 36,
+Пресет «Android» у `export_presets.cfg`: пакет `com.deepbounce.game`, версія 1.2.2 (code 10), target API 36,
 портрет на телефонах, будь-яка орієнтація на планшетах/складаних (див. [`docs/RELEASE_1.2.2_UA.md`](docs/RELEASE_1.2.2_UA.md)), arm64-v8a і x86_64, адаптивна іконка. Плагіни: `addons/GodotGooglePlayBilling` (офіційний, Billing
 Library 9.1.0) і власний `addons/DeepBounceAds` (Google Mobile Ads 24.9.0 + UMP 3.2.0; вихідний код —
 `android_plugins/deepbounce-ads`, збірка: `cd android_plugins/deepbounce-ads && gradle assemble`).

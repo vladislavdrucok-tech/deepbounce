@@ -10,6 +10,14 @@ G=${GODOT:-godot}
 cd "$(dirname "$0")/../.."
 VERSION=$(sed -n 's/^version\/name="\(.*\)"/\1/p' export_presets.cfg)
 mkdir -p build
+# Ads: test mode unless config/monetization.cfg says use_test_ads=false; a production-ads build is refused while
+# anything in tools/android/check_store_ready.sh is missing (licence key, real ad units, keystore...).
+if grep -q '^use_test_ads=false' config/monetization.cfg; then
+	echo "Ads: PRODUCTION (real AdMob App ID and ad units)"
+	tools/android/check_store_ready.sh || { echo "refusing a production-ads build: fix the items above"; exit 1; }
+else
+	echo "Ads: TEST (Google's test App ID and ad units) — for internal / closed testing"
+fi
 "$G" --headless --path . --import >/dev/null 2>&1 || true
 
 games_resource() {

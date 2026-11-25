@@ -126,5 +126,27 @@ func _ready() -> void:
 		"Godot's own immersive / edge-to-edge switches stay off (they call setDecorFitsSystemWindows)")
 	ok(int(ProjectSettings.get_setting("display/window/handheld/orientation")) == DisplayServer.SCREEN_SENSOR,
 		"manifest does not lock the orientation (resizable on large screens)")
+	# sound and music: every effect the code plays exists, the music loops and follows the setting
+	var used := {}
+	var re := RegEx.create_from_string('sfx\\("([a-z_]+)"')
+	for f in DirAccess.get_files_at("res://scripts"):
+		if f.ends_with(".gd"):
+			for m in re.search_all(FileAccess.get_file_as_string("res://scripts/" + f)):
+				used[m.get_string(1)] = true
+	var missing := []
+	for n in used:
+		if not G._streams.has(n):
+			missing.append(n)
+	ok(used.size() >= 14 and missing.is_empty(), "all %d sound effects used by the game are loaded" % used.size(), str(missing))
+	ok(G._music.stream is AudioStreamOggVorbis and G._music.stream.loop, "music is a looping OGG")
+	var was: bool = G.settings.music
+	G.settings.music = false
+	G.apply_music()
+	var off: bool = not G._music.playing
+	G.settings.music = true
+	G.apply_music()
+	ok(off and G._music.playing, "music stops and starts with the setting")
+	G.settings.music = was
+	G.apply_music()
 	print("PLAY " + ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit(1 if fails > 0 else 0)
