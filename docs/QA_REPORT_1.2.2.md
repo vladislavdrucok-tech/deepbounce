@@ -135,7 +135,9 @@ Google APIs, 1080×2280 @440 dpi, 4 ГБ RAM, без апаратного при
   (той самий, що в 1.0–1.2.1); AAB — `jarsigner -verify`: verified; APK — `apksigner verify`: v2 OK.
 - `bundletool validate` — без помилок; цілісність ZIP AAB і APK — без помилок.
 - Маніфест: `fullUser`, `resizeableActivity=true`, `appCategory=game`, `allowBackup=false`, AdMob App ID — тестовий
-  Google (`ca-app-pub-3940256099942544~3347511713`); дозволи: INTERNET, ACCESS_NETWORK_STATE, BILLING, AD_ID,
+  Google (`ca-app-pub-3940256099942544~3347511713`) — **у цій збірці від 25.11 13:47; з коміту «AdMob: real App ID
+  in the manifest» наступна збірка матиме справжній App ID `ca-app-pub-6607622048074974~8739194745` (рекламні блоки
+  лишаються тестовими)**; дозволи: INTERNET, ACCESS_NETWORK_STATE, BILLING, AD_ID,
   ACCESS_ADSERVICES_*, VIBRATE, WAKE_LOCK, FOREGROUND_SERVICE (з бібліотек Google).
 - Секрети: у 1305 файлах AAB/APK немає пароля ключа, файлів `.jks/.keystore/.pem/.env`, приватних ключів;
   у пакет не потрапили `tests/`, `tools/`, `docs/`; конфіг усередині — `use_test_ads=true`, `license_key=""`.

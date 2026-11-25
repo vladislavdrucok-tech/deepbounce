@@ -16,6 +16,7 @@ signal privacy_changed
 const AndroidAds := preload("res://scripts/ads_android.gd")
 const FakeAds := preload("res://scripts/ads_fake.gd")
 const NoAds := preload("res://scripts/ads_none.gd")
+const ADMOB := preload("res://scripts/admob_ids.gd")
 const LOAD_TIMEOUT_MS := 30000
 
 var backend: Node
@@ -67,13 +68,10 @@ func use_backend(b: Node) -> void:
 	requests = 0
 
 func test_ads() -> bool:
-	return bool(cfg.get_value("admob", "use_test_ads", true)) or String(cfg.get_value("admob", "real_app_id", "")) == ""
+	return ADMOB.test_mode(cfg)
 
 func unit(placement: String) -> String:
-	var key: String = {"revive": "rewarded_revive", "double": "rewarded_double", "interstitial": "interstitial"}[placement]
-	if test_ads():
-		return String(cfg.get_value("admob", "test_" + key, ""))
-	return String(cfg.get_value("admob", "real_" + key, ""))
+	return ADMOB.unit(cfg, placement)
 
 func cap(name: String, default):
 	return cfg.get_value("ads_caps", name, default)
@@ -84,8 +82,8 @@ func start() -> void:
 	if started or G.is_ad_free():
 		return
 	started = true
-	backend.start(test_ads(), bool(cfg.get_value("admob", "debug_geography_eea", false)) and test_ads(),
-		String(cfg.get_value("admob", "test_device_ids", "")), String(cfg.get_value("admob", "max_ad_content_rating", "PG")))
+	backend.start(test_ads(), ADMOB.debug_eea(cfg), ADMOB.test_devices(cfg),
+		String(cfg.get_value("admob", "max_ad_content_rating", "PG")))
 
 func _on_consent(can: bool, privacy: bool, error: String) -> void:
 	consent_done = true
@@ -93,16 +91,18 @@ func _on_consent(can: bool, privacy: bool, error: String) -> void:
 	privacy_required = privacy
 	if error != "":
 		print("[ads] consent: ", error)
-	G.diag("[ads] consent finished: can_request=%s privacy_required=%s %s" % [can, privacy, error])
+	# can_request is UMP's own canRequestAds(): after "Do not consent" it may be true or false, never assumed
+	G.diag("[ads] consent finished: can_request=%s privacy_required=%s %s | %s" % [can, privacy, error, backend.consent_info()])
 	changed.emit()
 	privacy_changed.emit()
 
 func show_privacy_options() -> void:
 	backend.show_privacy()
 
-func _on_privacy_closed(_error: String) -> void:
+func _on_privacy_closed(error: String) -> void:
 	can_request = backend.can_request_ads()
 	privacy_required = backend.is_privacy_required()
+	G.diag("[ads] privacy options closed: can_request=%s %s | %s" % [can_request, error, backend.consent_info()])
 	if not can_request:
 		loaded.clear()
 	changed.emit()
@@ -169,7 +169,7 @@ func _on_loaded(_kind: String, u: String) -> void:
 	G.diag("[ads] loaded " + u)
 	loading.erase(u)
 	failed.erase(u)
-	if G.is_ad_free():
+	if G.is_ad_free() or not can_request:   # Ad-Free bought or consent withdrawn while it was loading
 		return
 	loaded[u] = true
 	changed.emit()

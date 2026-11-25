@@ -16,7 +16,7 @@ if grep -q '^use_test_ads=false' config/monetization.cfg; then
 	echo "Ads: PRODUCTION (real AdMob App ID and ad units)"
 	tools/android/check_store_ready.sh || { echo "refusing a production-ads build: fix the items above"; exit 1; }
 else
-	echo "Ads: TEST (Google's test App ID and ad units) — for internal / closed testing"
+	echo "Ads: TEST (real AdMob App ID in the manifest for UMP, Google's test ad units) — for internal / closed testing"
 fi
 "$G" --headless --path . --import >/dev/null 2>&1 || true
 

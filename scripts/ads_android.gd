@@ -32,6 +32,10 @@ func can_request_ads() -> bool:
 func is_privacy_required() -> bool:
 	return p.isPrivacyOptionsRequired()
 
+func consent_info() -> String:
+	## UMP consent status + the TCF keys the ad SDK reads (gdprApplies, purpose consents); no personal data.
+	return String(p.consentInfo()) if p.has_method("consentInfo") else ""
+
 func show_privacy() -> void:
 	p.showPrivacyOptionsForm()
 

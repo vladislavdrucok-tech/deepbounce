@@ -313,6 +313,124 @@ func ads_tests() -> void:
 	G.ent.no_ads = true
 	Ads.disable()
 	ok(not Ads.is_ready("revive") and not Ads.show_rewarded("revive", "x") and Ads.status("revive") == "off", "buying Ad-Free stops ads at once")
+	# Ad-Free bought while an ad was still loading: the late answer is dropped, nothing more is requested
+	fresh_profile()
+	var fake4: Node = FakeAds.new()
+	fake4.delay = 0.3
+	Ads.use_backend(fake4)
+	Ads.start()
+	await wait(0.5)
+	Ads.load_ad("revive")
+	G.ent.no_ads = true
+	Ads.disable()
+	await wait(0.6)
+	var r0: int = Ads.requests
+	Ads.load_ad("revive")
+	Ads.load_ad("interstitial")
+	ok(not Ads.is_ready("revive") and Ads.requests == r0 and fake4.loads == 1 and not Ads.show_rewarded("revive", "y"),
+		"Ad-Free during a load: the late ad is dropped, no new request", "loads %d" % fake4.loads)
+	await consent_tests()
+
+func consent_tests() -> void:
+	## The three GDPR answers and the privacy options, driven only by what UMP reports (canRequestAds()).
+	# 1. "Consent": ads may be requested
+	fresh_profile()
+	var f1: Node = FakeAds.new()
+	Ads.use_backend(f1)
+	Ads.start()
+	await wait(0.2)
+	Ads.load_ad("revive")
+	await wait(0.2)
+	ok(Ads.can_request and Ads.is_ready("revive") and f1.loads == 1, "consent: UMP allows requests, the rewarded ad loads")
+	# 2. "Do not consent" where UMP answers canRequestAds()=false: nothing is requested at all
+	fresh_profile()
+	var f2: Node = FakeAds.new()
+	f2.consent_can = false
+	Ads.use_backend(f2)
+	Ads.start()
+	await wait(0.2)
+	Ads.load_ad("revive")
+	Ads.load_ad("double")
+	Ads.load_ad("interstitial")
+	await wait(0.2)
+	ok(Ads.consent_done and not Ads.can_request and f2.loads == 0 and Ads.requests == 0 and Ads.status("revive") == "unavailable",
+		"declined and UMP says no: no ad request, the video button is unavailable")
+	# 2b. "Do not consent" where UMP still answers true (TCF: the ad SDK then serves limited / no ads itself)
+	fresh_profile()
+	var f2b: Node = FakeAds.new()
+	f2b.fill = false   # the SDK may have nothing to serve without consent: a normal "no fill"
+	Ads.use_backend(f2b)
+	Ads.start()
+	await wait(0.2)
+	Ads.load_ad("revive")
+	await wait(0.2)
+	ok(f2b.loads == 1 and not Ads.is_ready("revive") and Ads.status("revive") == "unavailable" and not Ads.show_rewarded("revive", "z"),
+		"declined but UMP allows requests: requested once, no fill is handled, nothing is shown")
+	# 3. "Manage options" → privacy options: withdraw, then give consent again
+	fresh_profile()
+	var f3: Node = FakeAds.new()
+	Ads.use_backend(f3)
+	Ads.start()
+	await wait(0.2)
+	Ads.load_ad("revive")
+	await wait(0.2)
+	ok(Ads.privacy_required and Ads.is_ready("revive"), "privacy options entry required, an ad is loaded")
+	f3.privacy_choice = false
+	Ads.show_privacy_options()
+	await wait(0.2)
+	Ads.load_ad("double")
+	await wait(0.2)
+	ok(not Ads.can_request and not Ads.is_ready("revive") and not Ads.is_ready("double") and f3.loads == 1,
+		"consent withdrawn in privacy options: loaded ad dropped, no new request")
+	f3.privacy_choice = true
+	Ads.show_privacy_options()
+	await wait(0.2)
+	Ads.load_ad("double")
+	await wait(0.2)
+	ok(Ads.can_request and Ads.is_ready("double") and f3.loads == 2, "consent given again: requests resume")
+	# consent withdrawn while a request was in flight: the late ad is not kept
+	fresh_profile()
+	var f4: Node = FakeAds.new()
+	f4.delay = 0.3
+	Ads.use_backend(f4)
+	Ads.start()
+	await wait(0.5)
+	Ads.load_ad("revive")
+	f4.consent_can = false
+	Ads.can_request = false
+	await wait(0.6)
+	ok(not Ads.is_ready("revive"), "an ad that arrives after consent was withdrawn is not kept")
+	# canRequestAds() is asked again right before every request
+	fresh_profile()
+	var f5: Node = FakeAds.new()
+	Ads.use_backend(f5)
+	Ads.start()
+	await wait(0.2)
+	f5.consent_can = false
+	Ads.load_ad("revive")
+	ok(f5.loads == 0 and not Ads.can_request, "UMP answer changed after start: checked before the request, nothing requested")
+	# offline: requestConsentInfoUpdate fails, the earlier session's answer decides
+	for prev in [true, false]:
+		fresh_profile()
+		var f6: Node = FakeAds.new()
+		f6.consent_error = "offline"
+		f6.consent_can = prev
+		f6.network_ok = false
+		Ads.use_backend(f6)
+		Ads.start()
+		await wait(0.2)
+		Ads.load_ad("revive")
+		await wait(0.2)
+		ok(Ads.consent_done and Ads.can_request == prev and f6.loads == (1 if prev else 0) and not Ads.is_ready("revive")
+			and Ads.status("revive") == "unavailable", "offline consent error, earlier consent=%s: game goes on, no ad shown" % prev)
+	# start arguments: test mode, no forced EEA without registered test devices
+	fresh_profile()
+	var f7: Node = FakeAds.new()
+	Ads.use_backend(f7)
+	Ads.start()
+	await wait(0.1)
+	ok(f7.last_start.size() == 4 and f7.last_start[0] == true and f7.last_start[1] == false,
+		"closed test: test mode on, forced EEA off (no test devices registered)", str(f7.last_start))
 
 # ---------------------------------------------------------------- rewards
 
@@ -361,6 +479,42 @@ func admob_config_tests() -> void:
 		"production mode: revive → revive unit, double → double unit, interstitial → interstitial unit")
 	Ads.cfg.set_value("admob", "use_test_ads", saved)
 	ok(Ads.test_ads(), "test mode restored")
+	admob_ids_tests(cfg)
+
+func admob_ids_tests(cfg: ConfigFile) -> void:
+	## AndroidManifest App ID and the forced-EEA rule (scripts/admob_ids.gd, used by the export plugin).
+	var ids := preload("res://scripts/admob_ids.gd")
+	var real := String(cfg.get_value("admob", "real_app_id"))
+	ok(ids.manifest_app_id(cfg) == "ca-app-pub-6607622048074974~8739194745", "manifest App ID = the real Deep Bounce App ID", ids.manifest_app_id(cfg))
+	var c := ConfigFile.new()
+	c.parse(FileAccess.get_file_as_string("res://config/monetization.cfg"))
+	c.set_value("admob", "use_test_ads", true)
+	ok(ids.manifest_app_id(c) == real and ids.unit(c, "revive") == "ca-app-pub-3940256099942544/5224354917"
+		and ids.unit(c, "double") == "ca-app-pub-3940256099942544/5224354917"
+		and ids.unit(c, "interstitial") == "ca-app-pub-3940256099942544/1033173712",
+		"test mode: real App ID in the manifest, Google's test rewarded/interstitial units for every request")
+	c.set_value("admob", "use_test_ads", false)
+	ok(ids.manifest_app_id(c) == real and ids.unit(c, "revive") == String(cfg.get_value("admob", "real_rewarded_revive")),
+		"production mode: the same real App ID, real units")
+	c.set_value("admob", "real_app_id", "")
+	ok(ids.manifest_app_id(c) == String(cfg.get_value("admob", "test_app_id")) and ids.test_mode(c)
+		and ids.unit(c, "revive").begins_with("ca-app-pub-3940256099942544/"), "no real App ID: test App ID and test units")
+	var e := ConfigFile.new()
+	e.parse(FileAccess.get_file_as_string("res://config/monetization.cfg"))
+	e.set_value("admob", "use_test_ads", true)
+	e.set_value("admob", "debug_geography_eea", true)
+	e.set_value("admob", "test_device_ids", "")
+	ok(not ids.debug_eea(e), "forced EEA requested but no test device registered: off for every tester")
+	e.set_value("admob", "test_device_ids", " ABCDEF0123456789, ,33BE2250B43518CCDA7DE426D04EE231 ")
+	ok(ids.debug_eea(e) and ids.test_devices(e) == "ABCDEF0123456789,33BE2250B43518CCDA7DE426D04EE231",
+		"forced EEA only together with the registered hashed test devices", ids.test_devices(e))
+	e.set_value("admob", "use_test_ads", false)
+	ok(not ids.debug_eea(e), "production mode: never a forced EEA")
+	ok(not bool(cfg.get_value("admob", "debug_geography_eea", true)) and String(cfg.get_value("admob", "test_device_ids", "x")) == "",
+		"shipped config: forced EEA off, no test devices")
+	var plugin := FileAccess.get_file_as_string("res://addons/DeepBounceAds/export_plugin.gd")
+	ok(plugin.contains("ADMOB.manifest_app_id(cfg)") and not plugin.contains('get_value("admob", "test_app_id"'),
+		"export plugin writes the App ID from admob_ids.gd (real ID, also in test mode)")
 
 func signature_tests() -> void:
 	## Known-answer vectors made outside Godot (OpenSSL SHA1withRSA, cross-checked with Java's

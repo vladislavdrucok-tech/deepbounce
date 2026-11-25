@@ -80,9 +80,10 @@ Data safety, як перевірити покупки з тестерами лі
    real_rewarded_double="ca-app-pub-…/…"
    real_interstitial="ca-app-pub-…/…"
    ```
-   App ID плагін експорту сам вставляє в AndroidManifest (`com.google.android.gms.ads.APPLICATION_ID`). Поки
-   `use_test_ads=true` або реальні ID порожні, гра використовує **офіційні тестові блоки Google** — так зібрані
-   APK/AAB у цій поставці (у лозі експорту є попередження про тестовий App ID у release).
+   App ID плагін експорту сам вставляє в AndroidManifest (`com.google.android.gms.ads.APPLICATION_ID`) — справжній,
+   щойно він вписаний, і в тестовому режимі теж: за ним UMP знаходить ваше GDPR-повідомлення. Поки
+   `use_test_ads=true`, усі запити йдуть на **офіційні тестові блоки Google**; тестовий App ID — лише коли
+   справжнього немає (тоді в лозі експорту release є попередження).
 4. **Тестові пристрої:** при першому запуску SDK пише в logcat `Use RequestConfiguration.Builder().setTestDeviceIds(...)`
    з хешем пристрою — впишіть його в `test_device_ids`, щоб на своєму телефоні бачити тестову рекламу і з
    реальними блоками (власні кліки по реальній рекламі заборонені правилами AdMob).
