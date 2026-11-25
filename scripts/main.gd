@@ -151,11 +151,16 @@ static func chapter_of(lv: Dictionary) -> int:
 static func is_large_screen() -> bool:
 	## Android's own threshold for large screens: smallest width >= 600 dp (tablets, unfolded foldables,
 	## desktop windows). Phones stay portrait; large screens may rotate and resize freely.
-	var px := Vector2(DisplayServer.screen_get_size())
-	var dpi := float(DisplayServer.screen_get_dpi())
+	return large_for(Vector2(DisplayServer.screen_get_size()), Vector2(DisplayServer.window_get_size()),
+		float(DisplayServer.screen_get_dpi()))
+
+static func large_for(screen: Vector2, win: Vector2, dpi: float) -> bool:
+	## The larger of the screen and the window decides: the window size always follows a resize (fold/unfold,
+	## another display), while the reported screen size may lag behind on some devices.
 	if dpi <= 0.0:
 		return false
-	return minf(px.x, px.y) * 160.0 / dpi >= 600.0
+	var px := maxf(minf(screen.x, screen.y), minf(win.x, win.y))
+	return px * 160.0 / dpi >= 600.0
 
 static func wanted_orientation(large: bool) -> int:
 	return DisplayServer.SCREEN_SENSOR if large else DisplayServer.SCREEN_SENSOR_PORTRAIT
@@ -172,10 +177,14 @@ func _update_orientation() -> void:
 	# moving the game to another display switches between the two.
 	if OS.get_name() != "Android":
 		return
-	var want := wanted_orientation(is_large_screen())
+	var large := is_large_screen()
+	var want := wanted_orientation(large)
 	if want != _orientation:
 		_orientation = want
 		DisplayServer.screen_set_orientation(want)
+		G.diag("[screen] %s: screen %s, window %s, %d dpi -> %s" % ["large" if large else "phone",
+			DisplayServer.screen_get_size(), DisplayServer.window_get_size(), DisplayServer.screen_get_dpi(),
+			"any orientation" if large else "portrait"])
 
 func safe_rect(vp: Vector2) -> Rect2:
 	## The part of the window not covered by visible system bars or a display cutout, in viewport units.

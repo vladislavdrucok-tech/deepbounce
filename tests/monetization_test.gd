@@ -40,6 +40,7 @@ func _ready() -> void:
 	await billing_tests()
 	await ads_tests()
 	await reward_tests()
+	admob_config_tests()
 	print("MONETIZATION " + ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	var f := FileAccess.open("user://monetization_test.log", FileAccess.WRITE)
 	if f:
@@ -346,3 +347,34 @@ func reward_tests() -> void:
 	restart_profile()
 	ok(G.apply_double("att-1") == 0 and G.meta.crystals == 118, "after another restart it is not paid again")
 	ok(G.apply_double("att-2") == 0, "an attempt without a recorded reward pays nothing")
+
+func admob_config_tests() -> void:
+	## The real AdMob IDs are stored, but the closed-test build keeps Google's test IDs everywhere.
+	var cfg := ConfigFile.new()
+	cfg.load("res://config/monetization.cfg")
+	var app_re := RegEx.create_from_string("^ca-app-pub-(\\d{16})~\\d{10}$")
+	var unit_re := RegEx.create_from_string("^ca-app-pub-(\\d{16})/\\d{10}$")
+	var app := String(cfg.get_value("admob", "real_app_id", ""))
+	var m := app_re.search(app)
+	ok(m != null, "real AdMob App ID has the App ID format (~)", app)
+	var pub := m.get_string(1) if m else "?"
+	var units := {}
+	for k in ["rewarded_revive", "rewarded_double", "interstitial"]:
+		var u := String(cfg.get_value("admob", "real_" + k, ""))
+		var um := unit_re.search(u)
+		ok(um != null and um.get_string(1) == pub, "real %s is an ad unit ID (/) of the same publisher" % k, u)
+		units[u] = k
+	ok(units.size() == 3, "three different real ad units (one per placement)")
+	ok(bool(cfg.get_value("admob", "use_test_ads", false)), "closed-test build: use_test_ads=true")
+	ok(Ads.test_ads() and Ads.unit("revive").begins_with("ca-app-pub-3940256099942544/")
+		and Ads.unit("double").begins_with("ca-app-pub-3940256099942544/")
+		and Ads.unit("interstitial").begins_with("ca-app-pub-3940256099942544/"), "test mode: every placement requests Google's test units")
+	# production switch (simulated in memory only): each placement gets its own real unit
+	var saved = Ads.cfg.get_value("admob", "use_test_ads")
+	Ads.cfg.set_value("admob", "use_test_ads", false)
+	ok(not Ads.test_ads() and Ads.unit("revive") == String(cfg.get_value("admob", "real_rewarded_revive"))
+		and Ads.unit("double") == String(cfg.get_value("admob", "real_rewarded_double"))
+		and Ads.unit("interstitial") == String(cfg.get_value("admob", "real_interstitial")),
+		"production mode: revive → revive unit, double → double unit, interstitial → interstitial unit")
+	Ads.cfg.set_value("admob", "use_test_ads", saved)
+	ok(Ads.test_ads(), "test mode restored")

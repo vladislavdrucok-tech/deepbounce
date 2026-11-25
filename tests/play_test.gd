@@ -96,6 +96,10 @@ func _ready() -> void:
 	var r4: Rect2 = M.safe_rect_for(vp, win, full, Vector4i(-1, -1, -1, -1))
 	ok(r4 == Rect2(0, 0, 720, 1600), "insets not reported yet: Godot's safe area alone")
 	# Android 15/16 regressions: orientation per screen class, no deprecated edge-to-edge calls in our activity
+	ok(not M.large_for(Vector2(1080, 2400), Vector2(1080, 2400), 420.0), "phone 1080x2400 @420 dpi (411 dp) is not a large screen")
+	ok(M.large_for(Vector2(1600, 2560), Vector2(1600, 2560), 320.0), "tablet 1600x2560 @320 dpi (800 dp) is a large screen")
+	ok(M.large_for(Vector2(1080, 2400), Vector2(2208, 1840), 420.0), "unfolded foldable: the new window size counts even if the screen size lags")
+	ok(not M.large_for(Vector2(1080, 2280), Vector2(1080, 2280), 440.0), "folded again (outer screen 393 dp): portrait again")
 	ok(M.wanted_orientation(false) == DisplayServer.SCREEN_SENSOR_PORTRAIT and M.wanted_orientation(true) == DisplayServer.SCREEN_SENSOR,
 		"phones ask for portrait, large screens (sw >= 600 dp) may rotate")
 	var act := FileAccess.get_file_as_string("res://tools/android/template/GodotApp.java")
