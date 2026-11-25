@@ -173,6 +173,14 @@ func _setup_screen() -> void:
 		return
 	_update_orientation()
 	Play.set_immersive(true)
+	# Android can report the new smallest width a moment after the resize event (seen on the emulator when the
+	# size and the density change separately), so the check is repeated once a second as well.
+	var t := Timer.new()
+	t.wait_time = 1.0
+	t.process_mode = Node.PROCESS_MODE_ALWAYS
+	t.timeout.connect(_update_orientation)
+	add_child(t)
+	t.start()
 
 func _update_orientation() -> void:
 	# The manifest no longer locks the orientation (Android 16 ignores such locks on large screens anyway):
