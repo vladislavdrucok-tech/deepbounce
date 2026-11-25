@@ -3,11 +3,14 @@ extends RefCounted
 ## many runs and volleys through the real game loop with frames drawn, sampling static memory, objects, nodes
 ## and resources. A leak shows as steady growth after the warm-up; a healthy game levels off.
 
-const VOLLEYS := 150
+var VOLLEYS := 150        # --soak=N for a longer session
 const SAMPLE_EVERY := 15
 
 func run(qa) -> void:
 	var main = qa.main
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--soak="):
+			VOLLEYS = int(a.substr(7))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 4711
 	G.meta.tutorial = 6
@@ -50,16 +53,16 @@ func run(qa) -> void:
 			main.start_new_run(5150 + runs)
 			runs += 1
 	qa.log_line("soak: %d volleys, %d runs in %.0f s" % [volleys, runs, (Time.get_ticks_msec() - t0) / 1000.0])
-	# after warm-up (second sample) to the end
+	# A leak keeps growing; caches (glyphs of new number sizes, textures of new stone sizes) grow in steps while new
+	# content appears and then stop. Judged on the last third of the session.
 	var a: Dictionary = samples[1]
+	var m: Dictionary = samples[int(samples.size() * 2 / 3)]
 	var b: Dictionary = samples[-1]
-	var grow_mem: float = b.mem - a.mem
-	var grow_obj: int = b.obj - a.obj
-	var grow_nodes: int = b.nodes - a.nodes
-	qa.log_line("soak growth after warm-up: static %+.1f MB (%+.1f%%), objects %+d, nodes %+d, orphans %d"
-		% [grow_mem, 100.0 * grow_mem / a.mem, grow_obj, grow_nodes, b.orphans])
-	qa.check(grow_mem < a.mem * 0.10 and grow_nodes < 200 and b.orphans < 50,
-		"no leak over %d volleys / %d runs (memory and nodes level off)" % [volleys, runs],
-		"static %+.1f MB, nodes %+d, orphans %d" % [grow_mem, grow_nodes, b.orphans])
+	qa.log_line("soak growth: after warm-up %+.1f MB (%+.1f%%), in the last third %+.1f MB (%+.1f%%); objects %+d, nodes %+d, orphans %d"
+		% [b.mem - a.mem, 100.0 * (b.mem - a.mem) / a.mem, b.mem - m.mem, 100.0 * (b.mem - m.mem) / m.mem, b.obj - a.obj,
+		b.nodes - a.nodes, b.orphans])
+	qa.check(b.mem - m.mem < m.mem * 0.03 and absi(b.nodes - a.nodes) < 200 and b.orphans < 50,
+		"no leak over %d volleys / %d runs (memory levels off, nodes stable, no orphans)" % [volleys, runs],
+		"last third %+.1f MB, nodes %+d, orphans %d" % [b.mem - m.mem, b.nodes - a.nodes, b.orphans])
 	G.reset_defaults()
 	G.save_game()
