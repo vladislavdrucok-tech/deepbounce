@@ -93,6 +93,15 @@ const THEMES := [
 	{"bg": "ffb8a0", "wall": "e8b0a0", "ground": "dca898", "light": "ffa060", "decor": "heart"},           # 5 Heart of the Mine
 ]
 
+func fit_background(left: float, right: float) -> void:
+	## Covers the visible world x range [left, right] (plus a margin) with the background; the texture stays
+	## aligned to the same origin as on a phone, so nothing shifts when the window changes.
+	var x0 := minf(-400.0, floorf(left - 80.0))
+	var x1 := maxf(1120.0, ceilf(right + 80.0))
+	bg.position.x = x0
+	bg.region_rect.position.x = (x0 + 400.0) * 1.5
+	bg.region_rect.size.x = (x1 - x0) * 1.5
+
 static func wall_shade(k: int) -> Color:
 	## the wall copies further from the field get darker (only seen on wide screens)
 	if k == 0:
@@ -172,9 +181,10 @@ func _build_static() -> void:
 	bg.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	bg.region_enabled = true
 	bg.scale = Vector2.ONE / 1.5
-	# wide enough for landscape tablets and unfolded foldables, where the 9:16 field sits in the middle
-	bg.position = Vector2(-2400, -500)
-	bg.region_rect = Rect2(0, 0, 5520 * 1.5, 2600 * 1.5)
+	# phone width by default; fit_background() widens it to the visible area on landscape tablets and unfolded
+	# foldables (a fixed very wide quad doubled the frame time on software renderers)
+	bg.position = Vector2(-400, -500)
+	bg.region_rect = Rect2(0, 0, 1520 * 1.5, 2600 * 1.5)
 	bg.z_index = -2           # behind the outer wall copies (z -1) seen on wide screens
 	add_child(bg)
 	# walls: two copies per side, the outer one darker, for wide screens

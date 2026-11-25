@@ -225,6 +225,7 @@ func _layout() -> void:
 	layout_scale = s
 	layout_origin = Vector2(safe.position.x + (safe.size.x - 720.0 * s) * 0.5, safe.position.y)
 	world.scale = Vector2(s, s)
+	world.fit_background(-layout_origin.x / s, (vp.x - layout_origin.x) / s)
 	world.set_meta("base_pos", layout_origin)
 	world.position = layout_origin
 	ui_root.position = layout_origin
