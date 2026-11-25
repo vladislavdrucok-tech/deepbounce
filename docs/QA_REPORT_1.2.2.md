@@ -39,8 +39,10 @@
 
 Емулятор Google APIs, Android 11, 1080×2280 @440 dpi, 4 ГБ RAM, програмний GPU (swangle). Великі екрани імітовано
 зміною дисплея (`wm size` / `wm density` / `user_rotation`) — це реальна поведінка Android 11 з такими параметрами,
-але не заміна справжнього планшета чи складаного пристрою. Перевірено **фінальний APK**
-(SHA-256 `e46a713a…dc717`, збігається з `build/DeepBounce-1.2.2.apk`).
+але не заміна справжнього планшета чи складаного пристрою. Повний сценарій нижче пройдено на збірці
+`e46a713a…dc717`; фінальна збірка `fe931a36…ad9b` відрізняється лише розміром фону для широких екранів і пройшла
+окремий димовий тест: оновлення 1.2.1 → 1.2.2 (збереження не змінилось, SHA-256 встановленого APK збігається з
+фінальним), запуск, телефон (портрет, панелі приховані), планшет → поворот в альбом 2560×1600, назад у телефон — **PASS**.
 
 | Перевірка | Результат |
 |---|---|
@@ -104,3 +106,27 @@
 | Play Games | не налаштовано в Play Console |
 | Чи зникли попередження Play Console | видно лише після завантаження AAB у Play Console |
 | Оновлення через сам Google Play | потрібне завантаження в трек тестування |
+
+## 7. Фінальні файли
+
+| Файл | Розмір | SHA-256 |
+|---|---|---|
+| `build/DeepBounce-1.2.2.apk` | 68 617 456 Б | `fe931a36bc60eb1ce574f7515b55af28e4284d13129927c9f3b8578b4494ad9b` |
+| `build/DeepBounce-1.2.2.aab` | 68 473 244 Б | `64d9fa6f780546d2838d9436c0bda467a4cfc5b5b4e0efd835b9d76b5e44b7ad` |
+
+- package `com.deepbounce.game`, versionName 1.2.2, versionCode 9, minSdk 24, targetSdk 36, compileSdk 36.
+- Підпис: чинний ключ завантаження, сертифікат SHA-256
+  `D9:82:EB:F1:6E:53:8A:4D:A8:DA:58:77:8F:54:D5:D9:3E:C9:00:81:D4:46:D6:7D:4E:23:84:B4:0E:C6:6B:70`
+  (той самий, що в 1.0–1.2.1); `jarsigner -verify` AAB — verified; `apksigner verify` APK — v2 OK.
+- `bundletool validate` — без помилок; цілісність ZIP — без помилок.
+- Маніфест: `screenOrientation=fullUser`, `resizeableActivity=true`, `appCategory=game`, AdMob App ID — тестовий Google.
+- У dex активності `GodotApp` немає викликів `EdgeToEdge`, `enableImmersiveMode/EdgeToEdge`,
+  `setDecorFitsSystemWindows`, `setStatusBarColor`, `setNavigationBarColor`.
+- Ключі й паролі в репозиторій не потрапляють (`*.jks`, `*.env` у `.gitignore`).
+
+## 8. Блокери
+
+| Для чого | Блокер |
+|---|---|
+| Closed Alpha | немає |
+| Production | `[billing] license_key` порожній (підписи покупок не перевіряються); `use_test_ads=true` (перемкнути лише з вашого дозволу); не опубліковано повідомлення GDPR в AdMob і `app-ads.txt` у корені домену; справжні покупки, реклама й UMP не перевірені на пристрої (зробити в Closed Alpha) |
