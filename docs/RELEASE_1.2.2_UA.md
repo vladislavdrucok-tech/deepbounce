@@ -48,38 +48,47 @@ Kotlin, ніж шаблон збірки Godot 4.5.1, тому SDK лишивс�
 - Перевірено рендером: 1080×2400 (телефон 20:9), 1600×2560 (планшет, портрет), 2560×1600 (планшет, альбом),
   2208×1840 (розкладений складаний), 1280×800 (мале альбомне вікно) — меню, рівень, магазин, друга спроба.
 
-## 2. AdMob — перехід на справжню рекламу (коли буде готово)
-Поточна збірка: `use_test_ads=true`, офіційні тестові блоки Google (для Closed Alpha це правильно).
+## 2. AdMob
 
-Коли акаунт AdMob готовий (застосунок прив'язаний, 3 блоки створені, повідомлення GDPR опубліковано):
-1. AdMob → Apps → Deep Bounce → App settings → **App ID** (`ca-app-pub-…~…`).
-2. AdMob → Ad units → створити **Rewarded** «Continue», **Rewarded** «Double crystals», **Interstitial** «Between runs».
-3. У `config/monetization.cfg`:
-   ```ini
-   [admob]
-   use_test_ads=false
-   real_app_id="ca-app-pub-…~…"
-   real_rewarded_revive="ca-app-pub-…/…"
-   real_rewarded_double="ca-app-pub-…/…"
-   real_interstitial="ca-app-pub-…/…"
-   ```
-4. `tools/android/check_store_ready.sh` має сказати READY; лише тоді production-збірка.
-Тестовий режим не вимикається, поки поля `real_*` порожні: гра й плагін експорту беруть тестові ID.
+**Стан у 1.2.2:** справжні ID записані в `config/monetization.cfg`, але `use_test_ads=true` — збірка для закритого
+тестування запитує лише тестові блоки Google і має тестовий App ID у маніфесті (перевірено в AAB). Справжні покази
+не вмикаються.
+
+| Призначення | Ключ | ID | Де використовується |
+|---|---|---|---|
+| App ID (маніфест) | `real_app_id` | `ca-app-pub-6607622048074974~8739194745` | `com.google.android.gms.ads.APPLICATION_ID`, підставляє плагін експорту |
+| Rewarded «Друга спроба» | `real_rewarded_revive` | `ca-app-pub-6607622048074974/5915865485` | лише кнопка «Продовжити за рекламу» (камінь дійшов до лінії) |
+| Rewarded «Подвоїти кристали» | `real_rewarded_double` | `ca-app-pub-6607622048074974/7979435398` | лише кнопка подвоєння на екрані результатів |
+| Interstitial | `real_interstitial` | `ca-app-pub-6607622048074974/9696288856` | лише між забігами/спробами, з обмеженнями `[ads_caps]` |
+
+Тест MONETIZATION перевіряє формат ID, одного видавця, окремий блок для кожного місця й те, що в тестовому режимі всі
+місця беруть тестові блоки. Нагорода зараховується лише за сигналом SDK `onUserEarnedReward`, один раз на спробу
+(ідемпотентно за id забігу).
+
+**Перехід на production (лише з вашого дозволу):**
+1. AdMob → Privacy & messaging → створити й **опублікувати** повідомлення GDPR (EEA/UK/CH) для Deep Bounce; за
+   бажанням — повідомлення для штатів США. Без опублікованого повідомлення UMP не покаже форму згоди в ЄЕЗ.
+2. AdMob → Payments: заповнити платіжний профіль і податкову інформацію.
+3. Опублікувати `app-ads.txt` (розділ 3) і після публікації гри в Play прив'язати застосунок AdMob до лістингу.
+4. У `config/monetization.cfg` змінити лише `use_test_ads=false` → `tools/android/check_store_ready.sh` → нова збірка
+   з новим versionCode. Перевірено: така збірка матиме в маніфесті справжній App ID.
+5. Для власних тестів після переходу — додати хеш свого пристрою в `test_device_ids` (з logcat), не клікати по
+   справжній рекламі.
 
 ## 3. app-ads.txt — правильне розміщення
 AdMob шукає файл **у корені домену**, вказаного як «Веб-сайт» розробника в Google Play:
 `https://<домен>/app-ads.txt` (не в підпапці). Сторінка `https://vladislavdrucok-tech.github.io/deepbounce/` —
 це підпапка, тому для GitHub Pages потрібен окремий репозиторій користувача:
 1. Створи **публічний** репозиторій з назвою рівно `vladislavdrucok-tech.github.io`.
-2. Поклади в корінь файл `app-ads.txt` з одним рядком (pub-ID з AdMob → Settings → Account information):
+2. Поклади в корінь файл `app-ads.txt` (готовий у `tools/root-site/ready/`):
    ```
-   google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+   google.com, pub-6607622048074974, DIRECT, f08c47fec0942fa0
    ```
    і (необов'язково) `index.html` з посиланнями на політику й умови.
 3. Settings → Pages → Deploy from a branch → `main` / root. Перевір `https://vladislavdrucok-tech.github.io/app-ads.txt`.
 4. Play Console → Присутність у магазині → Налаштування магазину → **Веб-сайт**: `https://vladislavdrucok-tech.github.io`
 5. AdMob → Apps → Deep Bounce → app-ads.txt → перевірка (до 24 год).
-Шаблон: `site/app-ads.txt.template`. Скажи, коли репозиторій створено, — я підготую файли.
+Готові файли для `pub-6607622048074974`: `tools/root-site/ready/` (інструкція — `tools/root-site/README_UA.md`).
 
 ## 4. Google Play Billing — дії в Play Console
 Товари створюються лише після того, як у Play Console є завантажена збірка з Billing (уже є — 1.2.1).
