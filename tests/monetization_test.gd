@@ -51,9 +51,24 @@ func new_store(fake: Node = null) -> Node:
 	var b: Node = fake if fake else FakeBilling.new()
 	Store.use_backend(b)
 	Store.license_key = ""
+	Store.launch_id = "launch-1"
+	Store.clock_offset = 0
+	Store._focused = true
 	results.clear()
 	restores.clear()
 	return b
+
+func refund_confirmed() -> void:
+	## Google Play stops listing an item and keeps doing so: three complete answers, two app launches, over an hour.
+	Store.restore()
+	await wait(0.4)
+	Store.launch_id = "launch-%d" % randi()
+	Store.clock_offset += 1800
+	Store.restore()
+	await wait(0.4)
+	Store.clock_offset += 1900
+	Store.restore()
+	await wait(0.4)
 
 func last_status(pid: String) -> String:
 	for i in range(results.size() - 1, -1, -1):
@@ -194,6 +209,9 @@ func billing_tests() -> void:
 	G.cos.ball = "amber"
 	Store.restore()
 	await wait(0.5)
+	ok(G.owns("ball", "amber") and G.cos.ball == "amber" and G.ent.absent.has("db_ball_amber"),
+		"one answer without the item does not withdraw it yet (kept, absence recorded)")
+	await refund_confirmed()
 	ok(not G.owns("ball", "amber") and G.cos.ball == "classic" and G.owns("cannon", "obsidian"), "a refund confirmed by Google Play removes only that item and resets the selection")
 	# billing unavailable on the device
 	var f2: Node = new_store()
@@ -203,9 +221,180 @@ func billing_tests() -> void:
 	ok(Store.conn == Store.Conn.UNAVAILABLE, "no Google Play billing on the device: shown as unavailable")
 	Store.buy("db_ball_frost")
 	await wait(0.3)
-	ok(last_status("db_ball_frost") == "unavailable" or last_status("db_ball_frost") == "error", "buying then reports the problem instead of hanging", last_status("db_ball_frost"))
+	ok(last_status("db_ball_frost") == "billing_unavailable", "buying then says Google Play billing is unavailable on the device", last_status("db_ball_frost"))
+	await revocation_tests()
+	await error_tests()
 	await signature_tests()
 	new_store()
+
+func revocation_tests() -> void:
+	## A paid item is never taken away because of one odd answer of Google Play.
+	fresh_profile()
+	var f: Node = new_store()
+	Store.start()
+	await wait()
+	Store.buy("db_no_ads")
+	await wait(0.4)
+	Store.buy("db_ball_obsidian")
+	await wait(0.4)
+	ok(G.is_ad_free() and G.owns("ball", "obsidian"), "setup: Ad-Free and a ball bought")
+	# an OK answer that has no purchase list at all
+	f.answer_without_list = true
+	restores.clear()
+	Store.restore()
+	await wait(0.4)
+	ok(G.is_ad_free() and G.owns("ball", "obsidian") and G.ent.absent.is_empty() and restores[-1][0] == "error",
+		"incomplete answer (no purchase list): nothing withdrawn, nothing recorded, restore says error", str(restores))
+	f.answer_without_list = false
+	# a stale Play cache that leaves out permanent items, many times within one launch and over hours
+	f.hide_owned = true
+	for i in 5:
+		Store.clock_offset += 3600
+		Store.restore()
+		await wait(0.3)
+	ok(G.is_ad_free() and G.owns("ball", "obsidian"), "5 answers without the items in ONE launch (5 h): kept")
+	f.hide_owned = false
+	Store.restore()
+	await wait(0.3)
+	ok(G.ent.absent.is_empty() and G.is_ad_free(), "listed again: the absence record is cleared")
+	# two launches but within minutes: kept
+	f.hide_owned = true
+	Store.restore()
+	await wait(0.3)
+	Store.launch_id = "launch-2"
+	Store.clock_offset += 600
+	Store.restore()
+	await wait(0.3)
+	Store.restore()
+	await wait(0.3)
+	ok(G.is_ad_free() and G.owns("ball", "obsidian"), "3 answers from 2 launches but only 10 minutes: kept")
+	restart_profile()   # the absence record survives a restart
+	ok(G.ent.absent.has("db_no_ads") and int(G.ent.absent.db_no_ads.n) == 3, "absence record is saved with the profile", str(G.ent.absent))
+	Store.clock_offset += 3000
+	Store.restore()
+	await wait(0.3)
+	ok(not G.is_ad_free() and not G.owns("ball", "obsidian"), "absent in 4 answers, 2 launches, over an hour: withdrawn")
+	# it was a mistake after all: Google Play lists the purchases again → granted again, without a new payment
+	f.hide_owned = false
+	Store.restore()
+	await wait(0.4)
+	ok(G.is_ad_free() and G.owns("ball", "obsidian"), "items listed again by Google Play are granted again")
+	# network errors never count as absence
+	f.network_ok = false
+	for i in 4:
+		Store.launch_id = "launch-n%d" % i
+		Store.clock_offset += 7200
+		Store.restore()
+		await wait(0.3)
+	ok(G.is_ad_free() and G.ent.absent.is_empty(), "4 network errors over 8 h and 4 launches: nothing withdrawn, nothing recorded")
+	f.network_ok = true
+	# consumables are never 'withdrawn'; a refunded support purchase changes nothing
+	var c0 := int(G.support.count)
+	Store.buy("db_support_medium")
+	await wait(0.4)
+	f.refund("db_support_medium")
+	await refund_confirmed()
+	ok(int(G.support.count) == c0 + 1, "support purchases are not taken back")
+	# old saves without the absence record load fine
+	var old := {"v": 4, "settings": {"lang": "en"}, "meta": {"crystals": 1}, "cos": {}, "ent": {"no_ads": true, "products": ["db_no_ads"]},
+		"purchases": {}, "rewards": {}, "ads": {}, "levels": {}, "support": {}, "run": {}, "result": {}}
+	G.apply_data(G.migrate(old))
+	ok(G.is_ad_free() and G.ent.absent is Dictionary and G.ent.absent.is_empty(), "a 1.2.1 save (no absence record) loads with Ad-Free kept")
+
+func error_tests() -> void:
+	## Each Google Play problem gets its own clear message; none of them grants anything.
+	fresh_profile()
+	var f: Node = new_store()
+	Store.start()
+	await wait()
+	f.next["db_ball_amber"] = "network"
+	Store.buy("db_ball_amber")
+	await wait(0.4)
+	ok(last_status("db_ball_amber") == "offline" and not G.owns("ball", "amber"), "network error in the Play window → 'no connection' message")
+	f.next["db_ball_amber"] = "service"
+	Store.buy("db_ball_amber")
+	await wait(0.4)
+	ok(last_status("db_ball_amber") == "offline", "service unavailable → 'no connection' message")
+	f.launch_code = 3
+	Store.buy("db_ball_amber")
+	await wait(0.3)
+	ok(last_status("db_ball_amber") == "billing_unavailable" and Store.state("db_ball_amber") == "", "billing unavailable when opening the window → own message, button free")
+	f.launch_code = 12
+	Store.buy("db_ball_amber")
+	await wait(0.3)
+	ok(last_status("db_ball_amber") == "offline", "network error when opening the window → 'no connection'")
+	f.launch_code = 0
+	f.network_ok = false
+	Store.buy("db_ball_amber")
+	await wait(0.4)
+	ok(last_status("db_ball_amber") == "offline" and not G.owns("ball", "amber"), "no internet while fetching the offer → 'no connection'")
+	f.network_ok = true
+	Store._on_disconnected()
+	ok(Store.conn == Store.Conn.ERROR, "disconnected: shown as not connected")
+	Store.start()
+	await wait(0.3)
+	# the player takes a long time in the Google Play window: no false error
+	f.next["db_cannon_bronze"] = "hold"
+	Store.buy("db_cannon_bronze")
+	await wait(0.3)
+	Store._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	Store.busy["db_cannon_bronze"].since -= 120000
+	Store._process(0.0)
+	ok(Store.busy.has("db_cannon_bronze") and last_status("db_cannon_bronze") == "", "2 minutes in the Play window: still waiting, no error shown")
+	Store._notification(NOTIFICATION_APPLICATION_FOCUS_IN)
+	Store._process(0.0)
+	ok(Store.busy.has("db_cannon_bronze"), "back in the game: the answer gets the full time again")
+	f.finish_held()
+	await wait(0.4)
+	ok(G.owns("cannon", "bronze") and last_status("db_cannon_bronze") == "granted", "the answer arrives: granted, no error was shown before")
+	# no answer at all after returning: an error, and a late answer is still honoured once
+	f.next["db_cannon_obsidian"] = "hold"
+	Store.buy("db_cannon_obsidian")
+	await wait(0.3)
+	Store.busy["db_cannon_obsidian"].since -= 30000
+	Store._process(0.0)
+	ok(last_status("db_cannon_obsidian") == "error" and not Store.busy.has("db_cannon_obsidian"), "no answer 25 s after returning: error message, button free")
+	f.finish_held()
+	await wait(0.4)
+	ok(G.owns("cannon", "obsidian") and last_status("db_cannon_obsidian") == "granted", "a late answer is still granted (once)")
+	Store.restore()
+	await wait(0.4)
+	ok(G.ent.products.count("db_cannon_obsidian") == 1, "and not twice after the next query")
+	# replay of a consumed support purchase (repeated callback, restart): counted once
+	var c0 := int(G.support.count)
+	Store.buy("db_support_large")
+	await wait(0.5)
+	var tok := ""
+	for t in G.purchases:
+		if G.purchases[t].pid == "db_support_large":
+			tok = t
+	var copy: Dictionary = {"purchase_token": tok, "package_name": "com.deepbounce.game", "purchase_state": 1,
+		"product_ids": ["db_support_large"], "is_acknowledged": false, "original_json": "", "signature": ""}
+	var consumes: int = f.calls.consume
+	Store._handle(copy, true)
+	restart_profile()
+	Store._handle(copy, false)
+	ok(int(G.support.count) == c0 + 1 and G.purchases[tok].consumed and f.calls.consume == consumes,
+		"a consumed support purchase reported again (callback, restart) is not counted or consumed twice")
+	# another app's purchase is ignored
+	var other := copy.duplicate(true)
+	other.purchase_token = "other-token"
+	other.package_name = "com.example.other"
+	Store._handle(other, true)
+	ok(not G.purchases.has("other-token") and int(G.support.count) == c0 + 1, "a purchase for another package is ignored")
+	# every status has a message in every language
+	for st in ["purchase_error", "purchase_unverified", "store_offline", "billing_unavailable", "store_unavailable", "purchase_pending",
+			"already_owned", "restore_error", "restored_none"]:
+		var all := true
+		for l in ["uk", "en", "pl", "de", "es", "fr", "it", "pt_BR", "tr", "ja", "ko", "zh_CN"]:
+			var d: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://i18n/%s.json" % l))
+			all = all and String(d.get(st, "")) != ""
+		ok(all, "message '%s' exists in all 12 languages" % st)
+	var en: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://i18n/en.json"))
+	ok(not String(en.purchase_error).contains("not been charged"), "the general error no longer promises that nothing was charged")
+	var main_src := FileAccess.get_file_as_string("res://scripts/main.gd")
+	ok(main_src.contains('"offline"') and main_src.contains('"unverified"') and main_src.contains('"billing_unavailable"'),
+		"the game shows a message for every purchase status")
 
 # ---------------------------------------------------------------- ads
 
@@ -595,11 +784,46 @@ func signature_tests() -> void:
 	var forged: Dictionary = f.account.values()[0].duplicate(true)
 	forged.product_ids = ["db_cannon_obsidian"]
 	Store._on_purchase_updated({"response_code": 0, "purchases": [forged]})
-	ok(not G.ent.products.has("db_cannon_obsidian") and last_status("db_cannon_obsidian") == "error", "forged purchase (signature of another item) grants nothing")
+	ok(not G.ent.products.has("db_cannon_obsidian") and last_status("db_cannon_obsidian") == "unverified", "forged purchase (signature of another item) grants nothing, the player is told it could not be verified")
 	var unsigned: Dictionary = f.account.values()[0].duplicate(true)
 	unsigned.signature = ""
 	Store._on_purchase_updated({"response_code": 0, "purchases": [unsigned]})
 	ok(G.ent.products.is_empty(), "purchase without a signature grants nothing when a licence key is set")
+	# licence key handling
+	ok(Store.key_state("") == "missing" and Store.key_state("not a key") == "invalid" and Store.key_state("QUJDRA==") == "invalid"
+		and Store.key_state(pub) == "ok", "licence key: missing / invalid / valid are told apart")
+	var pem_wrapped := "-----BEGIN PUBLIC KEY-----\n" + pub + "\n-----END PUBLIC KEY-----"
+	ok(Store.key_state(pem_wrapped) == "ok" and Store.key_state("  " + pub.substr(0, 40) + "\n" + pub.substr(40) + "\n") == "ok",
+		"a key pasted with PEM lines, spaces or line breaks still loads")
+	fresh_profile()
+	f = new_store()
+	f.sign_key = priv
+	Store.license_key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAinvalid"
+	Store.start()
+	await wait(0.3)
+	results.clear()
+	Store.buy("db_ball_amber")
+	await wait(0.4)
+	ok(not G.owns("ball", "amber") and last_status("db_ball_amber") == "unverified", "a broken licence key fails closed: nothing granted")
+	# signed JSON that does not match what the plugin reports
+	var base := {"orderId": "GPA.1", "packageName": "com.deepbounce.game", "productId": "db_ball_amber", "purchaseTime": 1,
+		"purchaseState": 0, "purchaseToken": "tok-x", "quantity": 1, "acknowledged": false}
+	var cases := [["packageName", null, "package"], ["purchaseState", 1, "state"], ["purchaseToken", "tok-y", "token"], ["productId", "db_no_ads", "product"]]
+	for c in cases:
+		var j: Dictionary = base.duplicate()
+		if c[1] == null:
+			j.erase(c[0])
+		else:
+			j[c[0]] = c[1]
+		var sj := JSON.stringify(j)
+		var ssig := Marshalls.raw_to_base64(Crypto.new().sign(HashingContext.HASH_SHA1, sj.sha1_buffer(), priv))
+		var spu := {"purchase_token": "tok-x", "package_name": "com.deepbounce.game", "purchase_state": 1, "product_ids": ["db_ball_amber"],
+			"original_json": sj, "signature": ssig}
+		ok(Store.check_purchase(spu, pub) == c[2], "signed JSON with %s=%s is rejected (%s)" % [c[0], str(c[1]), c[2]], Store.check_purchase(spu, pub))
+	var good_js := JSON.stringify(base)
+	var good_pu := {"purchase_token": "tok-x", "package_name": "com.deepbounce.game", "purchase_state": 1, "product_ids": ["db_ball_amber"],
+		"original_json": good_js, "signature": Marshalls.raw_to_base64(Crypto.new().sign(HashingContext.HASH_SHA1, good_js.sha1_buffer(), priv))}
+	ok(Store.check_purchase(good_pu, pub) == "", "the same JSON unchanged passes")
 	# pending with a key: waits, then is granted once the payment completes
 	fresh_profile()
 	f = new_store()
@@ -616,7 +840,6 @@ func signature_tests() -> void:
 	await wait(0.4)
 	ok(G.owns("ball", "frost"), "after the payment completes (re-signed by Google Play) the item is granted")
 	f.refund("db_ball_frost")
-	Store.restore()
-	await wait(0.4)
+	await refund_confirmed()
 	ok(not G.owns("ball", "frost"), "refund confirmed by Google Play removes the item")
 	Store.license_key = ""

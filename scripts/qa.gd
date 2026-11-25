@@ -991,10 +991,20 @@ func _money() -> void:
 	await wait_s(0.5)
 	check(G.is_ad_free() and G.owns("ball", "amber"), "restore without network keeps the entitlements")
 	fake_play.network_ok = true
-	# a confirmed refund removes it
+	# a refund: one answer without the item keeps it (could be a stale answer) ...
 	fake_play.refund("db_ball_amber")
 	Store.restore()
 	await wait_s(0.5)
+	check(G.owns("ball", "amber"), "one answer of Google Play without the item does not remove it yet")
+	# ... confirmed by more answers from another launch an hour later, it is withdrawn
+	Store.launch_id = "qa-launch-2"
+	Store.clock_offset += 1800
+	Store.restore()
+	await wait_s(0.5)
+	Store.clock_offset += 1900
+	Store.restore()
+	await wait_s(0.5)
+	Store.clock_offset = 0
 	check(not G.owns("ball", "amber") and G.selected("ball") == "classic", "a refund confirmed by Google Play removes the finish and falls back to Classic")
 	G.reset_defaults()
 	G.save_game()

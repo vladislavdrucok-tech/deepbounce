@@ -604,8 +604,14 @@ func _on_purchase_result(pid: String, status: String) -> void:
 			screens.toast(G.t("already_owned"))
 		"unavailable":
 			screens.toast(G.t("store_unavailable"))
+		"offline":
+			screens.toast(G.t("store_offline"), 4.0)
+		"billing_unavailable":
+			screens.toast(G.t("billing_unavailable"), 5.0)
+		"unverified":
+			screens.toast(G.t("purchase_unverified"), 6.0)
 		_:
-			screens.toast(G.t("purchase_error"))
+			screens.toast(G.t("purchase_error"), 5.0)
 	screens.rebuild()
 
 func _on_restore_result(status: String, count: int) -> void:
