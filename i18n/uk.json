@@ -269,5 +269,7 @@
 "lb_unavailable": "Рейтинг зараз недоступний. Увійди в Google Play Ігри та перевір з'єднання.",
 "rate_game": "Оцінити гру",
 "privacy_policy": "Політика конфіденційності",
-"privacy_open_failed": "Не вдалося відкрити браузер. Політика конфіденційності: vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Умови використання",
+"privacy_open_failed": "Не вдалося відкрити браузер. Політика конфіденційності: vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Не вдалося відкрити браузер. Умови використання: vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

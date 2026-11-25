@@ -251,5 +251,7 @@
 "lb_unavailable": "Die Bestenlisten sind gerade nicht verfügbar. Melde dich bei Google Play Spiele an und prüfe die Verbindung.",
 "rate_game": "Spiel bewerten",
 "privacy_policy": "Datenschutzerklärung",
-"privacy_open_failed": "Der Browser konnte nicht geöffnet werden. Datenschutzerklärung: vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Nutzungsbedingungen",
+"privacy_open_failed": "Der Browser konnte nicht geöffnet werden. Datenschutzerklärung: vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Der Browser konnte nicht geöffnet werden. Nutzungsbedingungen: vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

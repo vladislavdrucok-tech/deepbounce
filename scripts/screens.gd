@@ -298,6 +298,7 @@ func show_settings() -> void:
 		v.add_child(_btn(G.t("restore"), func(): _restore(), true, Vector2(560, 80)))
 		v.add_child(_btn(G.t("rate_game"), func(): Play.open_store_page(), true, Vector2(560, 80)))
 		v.add_child(_btn(G.t("privacy_policy"), func(): open_privacy_policy(), true, Vector2(560, 80)))
+		v.add_child(_btn(G.t("terms_of_use"), func(): open_terms_of_use(), true, Vector2(560, 80)))
 		if Ads.privacy_required and not G.is_ad_free():
 			v.add_child(_btn(G.t("privacy_options"), func(): Ads.show_privacy_options(), true, Vector2(560, 80)))
 		v.add_child(_btn(G.t("back"), func(): back(), false, Vector2(320, 88)))
@@ -306,9 +307,18 @@ func show_settings() -> void:
 		v.add_child(ver))
 
 func privacy_policy_url() -> String:
+	return legal_url("privacy_policy_url")
+
+func legal_url(key: String) -> String:
 	var cfg := ConfigFile.new()
 	cfg.load("res://config/monetization.cfg")
-	return String(cfg.get_value("legal", "privacy_policy_url", ""))
+	return String(cfg.get_value("legal", key, ""))
+
+func open_terms_of_use() -> void:
+	## The published English Terms of Use in the browser.
+	var url := legal_url("terms_of_use_url")
+	if url == "" or OS.shell_open(url) != OK:
+		toast(G.t("terms_open_failed"))
 
 func open_privacy_policy() -> void:
 	## The published English Privacy Policy in the browser (separate from the ad consent settings).

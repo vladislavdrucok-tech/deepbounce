@@ -31,6 +31,7 @@ var won_timer := -1.0
 var upgrade_timer := -1.0
 var layout_scale := 1.0
 var layout_origin := Vector2.ZERO
+var _orientation := -1          # last orientation requested on Android (-1 = none yet)
 var save_timer := 0.0
 
 # aiming
@@ -156,16 +157,25 @@ static func is_large_screen() -> bool:
 		return false
 	return minf(px.x, px.y) * 160.0 / dpi >= 600.0
 
+static func wanted_orientation(large: bool) -> int:
+	return DisplayServer.SCREEN_SENSOR if large else DisplayServer.SCREEN_SENSOR_PORTRAIT
+
 func _setup_screen() -> void:
 	if OS.get_name() != "Android":
 		return
-	# The manifest no longer locks the orientation (Android 16 ignores such locks on large screens anyway):
-	# portrait is requested at run time on phones only.
-	if is_large_screen():
-		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR)
-	else:
-		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_PORTRAIT)
+	_update_orientation()
 	Play.set_immersive(true)
+
+func _update_orientation() -> void:
+	# The manifest no longer locks the orientation (Android 16 ignores such locks on large screens anyway):
+	# portrait is requested at run time on phones only. Re-checked on every resize, so unfolding a foldable or
+	# moving the game to another display switches between the two.
+	if OS.get_name() != "Android":
+		return
+	var want := wanted_orientation(is_large_screen())
+	if want != _orientation:
+		_orientation = want
+		DisplayServer.screen_set_orientation(want)
 
 func safe_rect(vp: Vector2) -> Rect2:
 	## The part of the window not covered by visible system bars or a display cutout, in viewport units.
@@ -188,6 +198,7 @@ static func safe_rect_for(vp: Vector2, win: Vector2, sa: Rect2i, ins: Vector4i) 
 	return safe
 
 func _layout() -> void:
+	_update_orientation()
 	var vp := get_viewport().get_visible_rect().size
 	var safe := safe_rect(vp)
 	var s := minf(safe.size.x / 720.0, safe.size.y / 1280.0)

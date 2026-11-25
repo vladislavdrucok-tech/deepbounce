@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -33,6 +34,18 @@ import java.util.concurrent.atomic.AtomicReference
  * the game so its layout keeps every button clear of them.
  */
 class DeepBouncePlay(godot: Godot) : GodotPlugin(godot) {
+
+    companion object {
+        /** Window insets (l, t, r, b) clipped to a view at (x, y) of size w×h inside a window of size ww×wh. */
+        @JvmStatic
+        fun overlap(l: Int, t: Int, r: Int, b: Int, x: Int, y: Int, w: Int, h: Int, ww: Int, wh: Int): IntArray =
+            intArrayOf(
+                (l - x).coerceIn(0, w),
+                (t - y).coerceIn(0, h),
+                (r - (ww - x - w)).coerceIn(0, w),
+                (b - (wh - y - h)).coerceIn(0, h),
+            )
+    }
 
     private val tag = "DeepBouncePlay"
     private val gamesStarted = AtomicBoolean(false)
@@ -94,12 +107,19 @@ class DeepBouncePlay(godot: Godot) : GodotPlugin(godot) {
     }
 
     private fun readInsets(act: Activity) {
-        val view = act.window?.decorView ?: return
-        val root = ViewCompat.getRootWindowInsets(view) ?: return
+        val decor = act.window?.decorView ?: return
+        val root = ViewCompat.getRootWindowInsets(decor) ?: return
         val i = root.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-        val now = intArrayOf(i.left, i.top, i.right, i.bottom)
+        // The insets are relative to the whole window. Below Android 15 a window that is not edge to edge lays the
+        // game view out between visible bars already, so only the part of each inset that overlaps the game view
+        // itself is reported (otherwise the bars would be subtracted twice).
+        val view: View = godot.renderView?.view ?: act.findViewById(android.R.id.content) ?: decor
+        if (view.width <= 0 || view.height <= 0) return
+        val loc = IntArray(2)
+        view.getLocationInWindow(loc)
+        val now = overlap(i.left, i.top, i.right, i.bottom, loc[0], loc[1], view.width, view.height, decor.width, decor.height)
         if (!now.contentEquals(lastInsets.getAndSet(now))) {
-            emit("insets_changed", i.left, i.top, i.right, i.bottom)
+            emit("insets_changed", now[0], now[1], now[2], now[3])
         }
     }
 

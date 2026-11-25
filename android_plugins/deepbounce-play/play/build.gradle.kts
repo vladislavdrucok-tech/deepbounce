@@ -36,6 +36,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-games-v2:$gamesVersion")
     implementation("com.google.android.play:review:$reviewVersion")
     implementation("androidx.core:core:$coreVersion")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.godotengine:godot:4.5.1.stable")
 }
 
 val copyAars by tasks.registering(Copy::class) {

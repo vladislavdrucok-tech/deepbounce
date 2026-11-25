@@ -251,5 +251,7 @@
 "lb_unavailable": "Le classement est indisponible pour le moment. Connecte-toi à Google Play Jeux et vérifie ta connexion.",
 "rate_game": "Noter le jeu",
 "privacy_policy": "Politique de confidentialité",
-"privacy_open_failed": "Impossible d'ouvrir le navigateur. Politique de confidentialité : vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Conditions d'utilisation",
+"privacy_open_failed": "Impossible d'ouvrir le navigateur. Politique de confidentialité : vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Impossible d'ouvrir le navigateur. Conditions d'utilisation : vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

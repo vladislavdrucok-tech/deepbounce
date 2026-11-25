@@ -242,5 +242,7 @@
 "lb_unavailable": "ランキングは現在利用できません。Google Play ゲームにログインし、接続を確認してください。",
 "rate_game": "ゲームを評価",
 "privacy_policy": "プライバシーポリシー",
-"privacy_open_failed": "ブラウザを開けませんでした。プライバシーポリシー：vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "利用規約",
+"privacy_open_failed": "ブラウザを開けませんでした。プライバシーポリシー：vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "ブラウザを開けませんでした。利用規約：vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

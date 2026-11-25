@@ -251,5 +251,7 @@
 "lb_unavailable": "Leaderboards are not available right now. Sign in to Google Play Games and check your connection.",
 "rate_game": "Rate the Game",
 "privacy_policy": "Privacy Policy",
-"privacy_open_failed": "Could not open the browser. The Privacy Policy is at vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Terms of Use",
+"privacy_open_failed": "Could not open the browser. The Privacy Policy is at vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Could not open the browser. The Terms of Use are at vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

@@ -251,5 +251,7 @@
 "lb_unavailable": "Sıralama şu anda kullanılamıyor. Google Play Oyunlar'da oturum aç ve bağlantını kontrol et.",
 "rate_game": "Oyunu değerlendir",
 "privacy_policy": "Gizlilik Politikası",
-"privacy_open_failed": "Tarayıcı açılamadı. Gizlilik Politikası: vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Kullanım Koşulları",
+"privacy_open_failed": "Tarayıcı açılamadı. Gizlilik Politikası: vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Tarayıcı açılamadı. Kullanım Koşulları: vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

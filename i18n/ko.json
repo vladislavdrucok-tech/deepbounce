@@ -242,5 +242,7 @@
 "lb_unavailable": "지금은 순위표를 볼 수 없습니다. Google Play 게임에 로그인하고 연결을 확인하세요.",
 "rate_game": "게임 평가하기",
 "privacy_policy": "개인정보처리방침",
-"privacy_open_failed": "브라우저를 열 수 없습니다. 개인정보처리방침: vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "이용약관",
+"privacy_open_failed": "브라우저를 열 수 없습니다. 개인정보처리방침: vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "브라우저를 열 수 없습니다. 이용약관: vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

@@ -76,6 +76,9 @@ func _ready() -> void:
 	cfg.load("res://config/monetization.cfg")
 	var url := String(cfg.get_value("legal", "privacy_policy_url", ""))
 	ok(url == "https://vladislavdrucok-tech.github.io/deepbounce/", "Settings → Privacy Policy opens the published page", url)
+	var terms := String(cfg.get_value("legal", "terms_of_use_url", ""))
+	ok(terms == "https://vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html" and FileAccess.file_exists("res://site/terms-of-use.html"),
+		"Settings → Terms of Use opens the published page", terms)
 	var html := FileAccess.get_file_as_string("res://site/index.html")
 	ok(html.contains("<html lang=\"en\">") and not html.contains("lang=\"uk\"") and html.contains("Deep Bounce") and html.contains("November 13, 2026"),
 		"policy source is English only, with developer and date filled in")
@@ -92,5 +95,29 @@ func _ready() -> void:
 	ok(is_equal_approx(r3.position.x, 80.0), "landscape with a camera cutout on the side: the cutout is avoided", str(r3))
 	var r4: Rect2 = M.safe_rect_for(vp, win, full, Vector4i(-1, -1, -1, -1))
 	ok(r4 == Rect2(0, 0, 720, 1600), "insets not reported yet: Godot's safe area alone")
+	# Android 15/16 regressions: orientation per screen class, no deprecated edge-to-edge calls in our activity
+	ok(M.wanted_orientation(false) == DisplayServer.SCREEN_SENSOR_PORTRAIT and M.wanted_orientation(true) == DisplayServer.SCREEN_SENSOR,
+		"phones ask for portrait, large screens (sw >= 600 dp) may rotate")
+	var act := FileAccess.get_file_as_string("res://tools/android/template/GodotApp.java")
+	var code := ""
+	for line in act.split("\n"):
+		if not line.strip_edges().begins_with("/") and not line.strip_edges().begins_with("*"):
+			code += line + "\n"
+	var banned := ["EdgeToEdge", "enableImmersiveMode", "enableEdgeToEdge", "setDecorFitsSystemWindows",
+		"setStatusBarColor", "setNavigationBarColor", "setSystemUiVisibility", "FLAG_FULLSCREEN", "FLAG_LAYOUT_NO_LIMITS"]
+	var found := []
+	for b in banned:
+		if code.contains(b):
+			found.append(b)
+	ok(found.is_empty() and code.contains("WindowInsetsControllerCompat") and code.contains("hide(WindowInsetsCompat.Type.systemBars())"),
+		"template activity hides the bars without deprecated window APIs", str(found))
+	var build := FileAccess.get_file_as_string("res://tools/android/build_release.sh")
+	ok(build.contains("cp tools/android/template/GodotApp.java android/build/src/com/godot/game/GodotApp.java"),
+		"the build copies the activity into the Gradle template")
+	var ep := FileAccess.get_file_as_string("res://export_presets.cfg")
+	ok(ep.contains("screen/immersive_mode=false") and ep.contains("screen/edge_to_edge=false"),
+		"Godot's own immersive / edge-to-edge switches stay off (they call setDecorFitsSystemWindows)")
+	ok(int(ProjectSettings.get_setting("display/window/handheld/orientation")) == DisplayServer.SCREEN_SENSOR,
+		"manifest does not lock the orientation (resizable on large screens)")
 	print("PLAY " + ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit(1 if fails > 0 else 0)
