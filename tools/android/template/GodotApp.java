@@ -34,6 +34,11 @@
 // androidx EdgeToEdge.enable(), which sets the deprecated status/navigation bar colours. Android 15+ already
 // draws apps edge to edge, so here the bars are only hidden through WindowInsetsControllerCompat; the game
 // keeps its buttons inside the safe area reported by the DeepBouncePlay plugin.
+// Back: Godot 4.5.1 receives Back through Activity#onBackPressed(), which Android 16 no longer calls for apps that
+// target API 36 (predictive back is on by default; KEYCODE_BACK is not dispatched either). An OnBackPressedCallback
+// on the activity's OnBackPressedDispatcher is the supported path on Android 16 and hands Back to Godot the same way
+// (Godot#onBackPressed -> plugins -> NOTIFICATION_WM_GO_BACK_REQUEST). On Android 15 and older the legacy
+// onBackPressed() keeps working and GodotActivity does not forward it to the dispatcher, so Back is never handled twice.
 
 package com.godot.game;
 
@@ -43,6 +48,8 @@ import org.godotengine.godot.GodotActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
+
+import androidx.activity.OnBackPressedCallback;
 
 import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.WindowCompat;
@@ -80,6 +87,15 @@ public class GodotApp extends GodotActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		SplashScreen.installSplashScreen(this);
 		super.onCreate(savedInstanceState);
+		getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+			@Override
+			public void handleOnBackPressed() {
+				Godot godot = getGodot();
+				if (godot != null) {
+					godot.onBackPressed();
+				}
+			}
+		});
 	}
 
 	@Override

@@ -118,6 +118,9 @@ func _ready() -> void:
 			found.append(b)
 	ok(found.is_empty() and code.contains("WindowInsetsControllerCompat") and code.contains("hide(WindowInsetsCompat.Type.systemBars())"),
 		"template activity hides the bars without deprecated window APIs", str(found))
+	ok(code.contains("getOnBackPressedDispatcher().addCallback(") and code.contains("godot.onBackPressed()")
+		and not code.contains("super.onBackPressed()"),
+		"Back reaches the game on Android 16 (target API 36): OnBackPressedCallback forwards it to Godot")
 	var build := FileAccess.get_file_as_string("res://tools/android/build_release.sh")
 	ok(build.contains("cp tools/android/template/GodotApp.java android/build/src/com/godot/game/GodotApp.java"),
 		"the build copies the activity into the Gradle template")

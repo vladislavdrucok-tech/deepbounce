@@ -893,6 +893,7 @@ func _on_lang() -> void:
 
 func _go_back() -> void:
 	## Android back button: never lose a run by accident.
+	G.diag("[input] back: screen %s, mode %d" % [screens.current if screens.is_open() else "-", mode])
 	if Ads.showing != "":
 		return
 	if screens.is_open():
