@@ -65,30 +65,28 @@ Kotlin, ніж шаблон збірки Godot 4.5.1, тому SDK лишивс�
 місця беруть тестові блоки. Нагорода зараховується лише за сигналом SDK `onUserEarnedReward`, один раз на спробу
 (ідемпотентно за id забігу).
 
-**Перехід на production (лише з вашого дозволу):**
-1. AdMob → Privacy & messaging → створити й **опублікувати** повідомлення GDPR (EEA/UK/CH) для Deep Bounce; за
-   бажанням — повідомлення для штатів США. Без опублікованого повідомлення UMP не покаже форму згоди в ЄЕЗ.
-2. AdMob → Payments: заповнити платіжний профіль і податкову інформацію.
-3. Опублікувати `app-ads.txt` (розділ 3) і після публікації гри в Play прив'язати застосунок AdMob до лістингу.
-4. У `config/monetization.cfg` змінити лише `use_test_ads=false` → `tools/android/check_store_ready.sh` → нова збірка
-   з новим versionCode. Перевірено: така збірка матиме в маніфесті справжній App ID.
-5. Для власних тестів після переходу — додати хеш свого пристрою в `test_device_ids` (з logcat), не клікати по
-   справжній рекламі.
+**UMP / GDPR.** Повідомлення «Deep Bounce GDPR Consent» опубліковане власником (EEA, UK, CH; Consent, Do not consent,
+Manage options; без закриття без вибору). Гра на кожному запуску викликає `requestConsentInfoUpdate()` →
+`loadAndShowConsentFormIfRequired()`, ініціалізує Mobile Ads і запитує рекламу лише якщо `canRequestAds()`.
+Відмова від персоналізації не вимикає рекламу: UMP передає сигнал TCF, і Google показує обмежену/неперсоналізовану
+рекламу. «Налаштування → Налаштування конфіденційності» з'являється, коли UMP каже `REQUIRED`; після зміни вибору
+дозвіл перечитується. Режим EEA для перевірки форми — лише при `use_test_ads=true`, `debug_geography_eea=true` і з
+хешем пристрою в `test_device_ids`.
 
-## 3. app-ads.txt — правильне розміщення
-AdMob шукає файл **у корені домену**, вказаного як «Веб-сайт» розробника в Google Play:
-`https://<домен>/app-ads.txt` (не в підпапці). Сторінка `https://vladislavdrucok-tech.github.io/deepbounce/` —
-це підпапка, тому для GitHub Pages потрібен окремий репозиторій користувача:
-1. Створи **публічний** репозиторій з назвою рівно `vladislavdrucok-tech.github.io`.
-2. Поклади в корінь файл `app-ads.txt` (готовий у `tools/root-site/ready/`):
-   ```
-   google.com, pub-6607622048074974, DIRECT, f08c47fec0942fa0
-   ```
-   і (необов'язково) `index.html` з посиланнями на політику й умови.
-3. Settings → Pages → Deploy from a branch → `main` / root. Перевір `https://vladislavdrucok-tech.github.io/app-ads.txt`.
-4. Play Console → Присутність у магазині → Налаштування магазину → **Веб-сайт**: `https://vladislavdrucok-tech.github.io`
-5. AdMob → Apps → Deep Bounce → app-ads.txt → перевірка (до 24 год).
-Готові файли для `pub-6607622048074974`: `tools/root-site/ready/` (інструкція — `tools/root-site/README_UA.md`).
+**Перехід на production (лише з вашого дозволу):**
+1. AdMob → Payments: платіжний профіль і податкова інформація (якщо ще не заповнено).
+2. Після публікації гри в Play — прив'язати застосунок AdMob до лістингу Play.
+3. У `config/monetization.cfg` змінити лише `use_test_ads=false`, вписати `license_key` →
+   `tools/android/build_release.sh` сам запустить `check_store_ready.sh` і **відмовиться збирати**, поки чогось бракує
+   (ключа ліцензування, справжніх блоків, ключа підпису). Перевірено: production-збірка має справжній App ID.
+4. Свій пристрій для тестів — хеш у `test_device_ids` (з logcat); не натискати на справжню рекламу.
+
+## 3. app-ads.txt — опубліковано й перевірено
+`https://vladislavdrucok-tech.github.io/app-ads.txt` → HTTP 200, `text/plain`, без перенаправлень, вміст рівно
+`google.com, pub-6607622048074974, DIRECT, f08c47fec0942fa0` (видавець збігається з App ID). Кореневий сайт,
+Privacy Policy (`/deepbounce/`) і Terms of Use (`/deepbounce/terms-of-use.html`) — HTTP 200, пошта підтримки
+`deepbounce.support@gmail.com` на всіх сторінках. Залишається: AdMob → Apps → Deep Bounce → app-ads.txt → перевірка
+(AdMob робить її сам до 24 год; статус видно лише в AdMob). Резервна копія файлів — `tools/root-site/ready/`.
 
 ## 4. Google Play Billing — дії в Play Console
 Товари створюються лише після того, як у Play Console є завантажена збірка з Billing (уже є — 1.2.1).
