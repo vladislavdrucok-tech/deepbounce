@@ -701,6 +701,9 @@ func admob_ids_tests(cfg: ConfigFile) -> void:
 	ok(not ids.debug_eea(e), "production mode: never a forced EEA")
 	ok(not bool(cfg.get_value("admob", "debug_geography_eea", true)) and String(cfg.get_value("admob", "test_device_ids", "x")) == "",
 		"shipped config: forced EEA off, no test devices")
+	var aa := FileAccess.get_file_as_string("res://scripts/ads_android.gd")
+	ok(aa.contains("p.consentInfo()") and not aa.contains('has_method("consentInfo")'),
+		"UMP diagnostics call the plugin directly (has_method() cannot see Android plugin methods)")
 	var plugin := FileAccess.get_file_as_string("res://addons/DeepBounceAds/export_plugin.gd")
 	ok(plugin.contains("ADMOB.manifest_app_id(cfg)") and not plugin.contains('get_value("admob", "test_app_id"'),
 		"export plugin writes the App ID from admob_ids.gd (real ID, also in test mode)")

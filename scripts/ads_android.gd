@@ -34,7 +34,9 @@ func is_privacy_required() -> bool:
 
 func consent_info() -> String:
 	## UMP consent status + the TCF keys the ad SDK reads (gdprApplies, purpose consents); no personal data.
-	return String(p.consentInfo()) if p.has_method("consentInfo") else ""
+	# called directly: methods of an Android plugin singleton are not visible to has_method()
+	var s = p.consentInfo()
+	return "" if s == null else String(s)
 
 func show_privacy() -> void:
 	p.showPrivacyOptionsForm()
