@@ -201,8 +201,8 @@ static func dim(parent: Control, alpha := 0.62) -> ColorRect:
 	var c := ColorRect.new()
 	c.color = Color(0.01, 0.05, 0.06, alpha)
 	c.set_anchors_preset(Control.PRESET_FULL_RECT)
-	c.offset_left = -400
-	c.offset_right = 400
+	c.offset_left = -2400     # covers the side areas of wide windows too
+	c.offset_right = 2400
 	c.offset_top = -400
 	c.offset_bottom = 400
 	c.mouse_filter = Control.MOUSE_FILTER_STOP

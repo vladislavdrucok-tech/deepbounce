@@ -19,7 +19,7 @@ func _exit_tree() -> void:
 class PlayExportPlugin extends EditorExportPlugin:
 	const NAME := "DeepBouncePlay"
 	# keep in sync with android_plugins/deepbounce-play/play/build.gradle.kts
-	const DEPS := ["com.google.android.gms:play-services-games-v2:21.0.0", "com.google.android.play:review:2.0.2"]
+	const DEPS := ["com.google.android.gms:play-services-games-v2:21.0.0", "com.google.android.play:review:2.0.2", "androidx.core:core:1.13.1"]
 
 	func _supports_platform(platform) -> bool:
 		return platform is EditorExportPlatformAndroid

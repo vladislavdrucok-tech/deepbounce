@@ -46,10 +46,12 @@ Data safety, як перевірити покупки з тестерами лі
    таблиці: Product ID (точно як у таблиці), назва й опис (англійська за замовчуванням + переклади з
    `docs/PLAY_PRODUCTS.md`), Purchase option «Buy», ціна в USD → «Set prices» (Google перерахує в місцеві
    валюти), **Activate**. Для витратних товарів окремого прапорця немає: «витратність» робить код гри (consume).
-4. **Ключ ліцензування:** Monetize with Play → Monetization setup → Licensing → скопіюйте Base64 public key у
-   `config/monetization.cfg`, `[billing] license_key="…"`. Тоді кожен підпис покупки (`originalJson` +
-   `signature`) перевіряється на пристрої RSA‑SHA256; без ключа гра пише попередження в лог і довіряє стану
-   покупки з Play Billing Library.
+4. **Ключ ліцензування:** Monetize with Play → Monetization setup → Licensing → скопіюйте Base64 public key.
+   Перевірка: `tools/android/license_key.sh "<ключ>"`. Далі або `config/monetization.cfg` → `[billing] license_key="…"`,
+   або (щоб ключ не потрапив у GitHub) змінна `DEEPBOUNCE_PLAY_LICENSE_KEY` під час `build_release.sh`. Тоді кожен
+   підпис покупки (`originalJson` + `signature`) перевіряється на пристрої — **SHA1withRSA** (як підписує Google Play;
+   SHA-256 приймається про запас). Без ключа перевірити підпис неможливо: дозволено лише для тестування, production-збірка
+   відмовляється (блокер безпеки). Зламаний ключ — нічого не видається, збірка відмовляється.
 5. **Тестери ліцензій:** Settings (налаштування акаунта розробника) → License testing → додайте свій Gmail
    (той самий, що на телефоні). Для них у вікні оплати з'являються тестові картки: «Test card, always approves»,
    «… always declines», «Slow test card, approves after a few minutes» (перевірка PENDING), «… declines after a few
@@ -80,9 +82,10 @@ Data safety, як перевірити покупки з тестерами лі
    real_rewarded_double="ca-app-pub-…/…"
    real_interstitial="ca-app-pub-…/…"
    ```
-   App ID плагін експорту сам вставляє в AndroidManifest (`com.google.android.gms.ads.APPLICATION_ID`). Поки
-   `use_test_ads=true` або реальні ID порожні, гра використовує **офіційні тестові блоки Google** — так зібрані
-   APK/AAB у цій поставці (у лозі експорту є попередження про тестовий App ID у release).
+   App ID плагін експорту сам вставляє в AndroidManifest (`com.google.android.gms.ads.APPLICATION_ID`) — справжній,
+   щойно він вписаний, і в тестовому режимі теж: за ним UMP знаходить ваше GDPR-повідомлення. Поки
+   `use_test_ads=true`, усі запити йдуть на **офіційні тестові блоки Google**; тестовий App ID — лише коли
+   справжнього немає (тоді в лозі експорту release є попередження).
 4. **Тестові пристрої:** при першому запуску SDK пише в logcat `Use RequestConfiguration.Builder().setTestDeviceIds(...)`
    з хешем пристрою — впишіть його в `test_device_ids`, щоб на своєму телефоні бачити тестову рекламу і з
    реальними блоками (власні кліки по реальній рекламі заборонені правилами AdMob).
@@ -141,8 +144,10 @@ Data safety, як перевірити покупки з тестерами лі
 **Спосіб перевірки покупки (точно):** гра офлайнова й без сервера, тому перевірка — на пристрої:
 (1) стан `PURCHASED` від Play Billing Library 9.1 (плагін GodotGooglePlayBilling 3.3.0); (2) `packageName ==
 com.deepbounce.game`; (3) якщо задано `license_key` — криптографічна перевірка підпису `originalJson`
-ключем ліцензування (RSA, SHA256withRSA, `Crypto.verify`), інакше видачі немає; (4) ідемпотентний журнал
-`purchaseToken`. Серверної перевірки через Google Play Developer API немає — на рутованому пристрої таку
+ключем ліцензування (RSA PKCS#1 v1.5, **SHA1withRSA**, SHA-256 про запас; `Crypto.verify`) і збіг підписаного JSON
+із покупкою (packageName, purchaseToken, productId, purchaseState), інакше видачі немає; (4) ідемпотентний журнал
+`purchaseToken`; (5) товар забирається лише після кількох повних відповідей Google Play без нього (3 відповіді,
+2 запуски, ≥ 1 год) — помилка мережі чи неповна відповідь нічого не забирають. Серверної перевірки через Google Play Developer API немає — на рутованому пристрої таку
 перевірку теоретично можна обійти; для офлайн-гри з косметикою це звичайний компроміс. Якщо в майбутньому
 з'явиться сервер — додати перевірку токена через `purchases.products.get`.
 

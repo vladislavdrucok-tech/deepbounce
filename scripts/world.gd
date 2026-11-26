@@ -93,6 +93,24 @@ const THEMES := [
 	{"bg": "ffb8a0", "wall": "e8b0a0", "ground": "dca898", "light": "ffa060", "decor": "heart"},           # 5 Heart of the Mine
 ]
 
+func fit_background(left: float, right: float) -> void:
+	## Covers the visible world x range [left, right] (plus a margin) with the background; the texture stays
+	## aligned to the same origin as on a phone, so nothing shifts when the window changes.
+	var x0 := minf(-400.0, floorf(left - 80.0))
+	var x1 := maxf(1120.0, ceilf(right + 80.0))
+	bg.position.x = x0
+	bg.region_rect.position.x = (x0 + 400.0) * 1.5
+	bg.region_rect.size.x = (x1 - x0) * 1.5
+
+static func wall_shade(k: int) -> Color:
+	## the wall copies further from the field get darker (only seen on wide screens)
+	if k == 0:
+		return Color(1, 1, 1)
+	if k == 1:
+		return Color(0.62, 0.6, 0.6)
+	var v := maxf(0.2, 0.42 - 0.035 * (k - 2))
+	return Color(v, v * 0.97, v * 0.97)
+
 func ball_tex(kind: int) -> Texture2D:
 	var k := "normal"
 	if kind == Sim.K_HEAVY:
@@ -133,7 +151,7 @@ func set_theme(chapter: int) -> void:
 	bg.modulate = Color(th.bg)
 	for w in walls:
 		var k: int = w.get_meta("k", 0)
-		var base := Color(1, 1, 1) if k == 0 else (Color(0.62, 0.6, 0.6) if k == 1 else Color(0.42, 0.4, 0.4))
+		var base := wall_shade(k)
 		w.modulate = base * Color(th.wall)
 	ground.modulate = Color(th.ground)
 	spill.modulate = Color(Color(th.light), 0.10)
@@ -163,12 +181,15 @@ func _build_static() -> void:
 	bg.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	bg.region_enabled = true
 	bg.scale = Vector2.ONE / 1.5
+	# phone width by default; fit_background() widens it to the visible area on landscape tablets and unfolded
+	# foldables (a fixed very wide quad doubled the frame time on software renderers)
 	bg.position = Vector2(-400, -500)
 	bg.region_rect = Rect2(0, 0, 1520 * 1.5, 2600 * 1.5)
+	bg.z_index = -2           # behind the outer wall copies (z -1) seen on wide screens
 	add_child(bg)
 	# walls: two copies per side, the outer one darker, for wide screens
 	for side in [0, 1]:
-		for k in 3:
+		for k in 10:
 			var w := Sprite2D.new()
 			w.texture = tex["walls/wall_left" if side == 0 else "walls/wall_right"]
 			w.centered = false
@@ -183,7 +204,7 @@ func _build_static() -> void:
 			w.set_meta("phase", k * 337.0)
 			w.set_meta("k", k)
 			if k > 0:
-				w.modulate = Color(0.62, 0.6, 0.6) if k == 1 else Color(0.42, 0.4, 0.4)
+				w.modulate = wall_shade(k)
 				w.z_index = -1
 			walls.append(w)
 			add_child(w)

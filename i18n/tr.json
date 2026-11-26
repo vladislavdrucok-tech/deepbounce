@@ -110,7 +110,10 @@
 "opening_play": "Google Play açılıyor…",
 "pending_short": "Ödeme bekleniyor…",
 "purchase_pending": "Ödeme beklemede. Google Play ödemeyi onaylar onaylamaz ürün gelecek.",
-"purchase_error": "Satın alım tamamlanmadı. Ücret alınmadı.",
+"purchase_error": "Satın alım tamamlanmadı. Yine de ücret alındıysa ürün kendiliğinden gelir ya da Google Play ücreti iade eder.",
+"purchase_unverified": "Satın alım doğrulanamadı, bu yüzden hiçbir şey verilmedi. Ücret alındıysa Google Play 3 gün içinde otomatik olarak iade eder.",
+"store_offline": "Google Play bağlantısı yok. İnternetini kontrol edip tekrar dene.",
+"billing_unavailable": "Bu cihazda Google Play satın alımları kullanılamıyor. Google Play'in yüklü olduğunu ve oturum açtığını kontrol et.",
 "store_unavailable": "Bu ürün şu anda Google Play'de mevcut değil.",
 "unavailable": "Mevcut değil",
 "retry": "Tekrar dene",
@@ -251,5 +254,7 @@
 "lb_unavailable": "Sıralama şu anda kullanılamıyor. Google Play Oyunlar'da oturum aç ve bağlantını kontrol et.",
 "rate_game": "Oyunu değerlendir",
 "privacy_policy": "Gizlilik Politikası",
-"privacy_open_failed": "Tarayıcı açılamadı. Gizlilik Politikası: vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Kullanım Koşulları",
+"privacy_open_failed": "Tarayıcı açılamadı. Gizlilik Politikası: vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Tarayıcı açılamadı. Kullanım Koşulları: vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

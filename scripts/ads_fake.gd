@@ -11,8 +11,11 @@ signal ad_failed_to_show(kind: String, unit: String, code: int, msg: String)
 signal ad_dismissed(kind: String, unit: String)
 signal user_earned_reward(kind: String, unit: String, type: String, amount: int)
 
-var consent_can := true
+var consent_can := true        # what UMP's canRequestAds() answers
 var privacy_required := true
+var consent_error := ""        # e.g. "offline": requestConsentInfoUpdate failed, canRequestAds() from an earlier session
+var privacy_choice = null      # null: privacy form closed unchanged; true/false: the player changed the choice
+var last_start := []           # [test_mode, debug_eea, devices, rating] of the last start()
 var network_ok := true
 var fill := true
 var outcome := "reward"        # "reward", "close" (closed before the reward), "fail" (cannot show), "double_cb"
@@ -25,9 +28,10 @@ var _ready_units := {}
 func _later(f: Callable, t := -1.0) -> void:
 	get_tree().create_timer(delay if t < 0.0 else t).timeout.connect(f)
 
-func start(_test_mode: bool, _eea: bool, _devices: String, _rating: String) -> void:
+func start(test_mode: bool, eea: bool, devices: String, rating: String) -> void:
 	started += 1
-	_later(func(): consent_finished.emit(consent_can, privacy_required, ""))
+	last_start = [test_mode, eea, devices, rating]
+	_later(func(): consent_finished.emit(consent_can, privacy_required, consent_error))
 
 func can_request_ads() -> bool:
 	return consent_can
@@ -35,8 +39,14 @@ func can_request_ads() -> bool:
 func is_privacy_required() -> bool:
 	return privacy_required
 
+func consent_info() -> String:
+	return "fake can=%s" % consent_can
+
 func show_privacy() -> void:
-	_later(func(): privacy_form_closed.emit(""))
+	_later(func():
+		if privacy_choice != null:
+			consent_can = bool(privacy_choice)
+		privacy_form_closed.emit(""))
 
 func _load(kind: String, unit: String) -> void:
 	loads += 1

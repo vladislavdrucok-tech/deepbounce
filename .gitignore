@@ -21,3 +21,5 @@ local.properties
 export_credentials.cfg
 # Python
 __pycache__/
+# generated root-site files (real AdMob publisher ID)
+tools/root-site/out/

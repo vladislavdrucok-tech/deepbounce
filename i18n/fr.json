@@ -110,7 +110,10 @@
 "opening_play": "Ouverture de Google Play…",
 "pending_short": "Paiement en attente…",
 "purchase_pending": "Paiement en attente. L'article arrivera dès que Google Play confirmera le paiement.",
-"purchase_error": "L'achat n'a pas abouti. Aucun montant n'a été débité.",
+"purchase_error": "L'achat n'a pas été finalisé. Si tu as quand même été débité, l'article apparaîtra tout seul ou Google Play te remboursera.",
+"purchase_unverified": "L'achat n'a pas pu être vérifié, rien n'a donc été attribué. Si tu as été débité, Google Play te rembourse automatiquement sous 3 jours.",
+"store_offline": "Pas de connexion à Google Play. Vérifie ta connexion internet et réessaie.",
+"billing_unavailable": "Les achats Google Play ne sont pas disponibles sur cet appareil. Vérifie que Google Play est installé et que tu es connecté.",
 "store_unavailable": "Cet article n'est pas disponible sur Google Play pour le moment.",
 "unavailable": "Indisponible",
 "retry": "Réessayer",
@@ -251,5 +254,7 @@
 "lb_unavailable": "Le classement est indisponible pour le moment. Connecte-toi à Google Play Jeux et vérifie ta connexion.",
 "rate_game": "Noter le jeu",
 "privacy_policy": "Politique de confidentialité",
-"privacy_open_failed": "Impossible d'ouvrir le navigateur. Politique de confidentialité : vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Conditions d'utilisation",
+"privacy_open_failed": "Impossible d'ouvrir le navigateur. Politique de confidentialité : vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Impossible d'ouvrir le navigateur. Conditions d'utilisation : vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

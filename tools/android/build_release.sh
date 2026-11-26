@@ -10,6 +10,27 @@ G=${GODOT:-godot}
 cd "$(dirname "$0")/../.."
 VERSION=$(sed -n 's/^version\/name="\(.*\)"/\1/p' export_presets.cfg)
 mkdir -p build
+# Ads: test mode unless config/monetization.cfg says use_test_ads=false; a production-ads build is refused while
+# anything in tools/android/check_store_ready.sh is missing (licence key, real ad units, keystore...).
+if grep -q '^use_test_ads=false' config/monetization.cfg; then
+	echo "Ads: PRODUCTION (real AdMob App ID and ad units)"
+	tools/android/check_store_ready.sh || { echo "refusing a production-ads build: fix the items above"; exit 1; }
+else
+	echo "Ads: TEST (real AdMob App ID in the manifest for UMP, Google's test ad units) — for internal / closed testing"
+fi
+# Play licence key: a key that is set but broken would make every purchase fail its check — refuse in any mode.
+set +e; tools/android/license_key.sh; LK=$?; set -e
+if [ $LK -eq 1 ]; then echo "refusing the build: fix the Play licence key"; exit 1; fi
+# A key given only in the environment goes into the exported config for this build and nowhere else.
+CFG_BACKUP=""
+if [ -n "$DEEPBOUNCE_PLAY_LICENSE_KEY" ] && grep -q '^license_key=""' config/monetization.cfg; then
+	CFG_BACKUP=$(mktemp)
+	cp config/monetization.cfg "$CFG_BACKUP"
+	trap 'cp "$CFG_BACKUP" config/monetization.cfg; rm -f "$CFG_BACKUP"' EXIT INT TERM
+	K=$(printf '%s' "$DEEPBOUNCE_PLAY_LICENSE_KEY" | sed 's/-----[A-Z ]*-----//g' | tr -d ' \t\r\n')
+	sed -i "s|^license_key=\"\"|license_key=\"$K\"|" config/monetization.cfg
+	echo "Play licence key: taken from DEEPBOUNCE_PLAY_LICENSE_KEY for this build (config file restored afterwards)"
+fi
 "$G" --headless --path . --import >/dev/null 2>&1 || true
 
 games_resource() {
@@ -31,6 +52,10 @@ prepare_template() {
 		sed -i "s/compileSdk         : 35/compileSdk         : 36/; s/buildTools         : '35.0.0'/buildTools         : '36.0.0'/" android/build/config.gradle
 		grep -q "android.suppressUnsupportedCompileSdk" android/build/gradle.properties || \
 			echo "android.suppressUnsupportedCompileSdk=36" >> android/build/gradle.properties
+	fi
+	# Activity without the deprecated edge-to-edge calls of the stock template (see the file's header)
+	if [ -d android/build/src/com/godot/game ]; then
+		cp tools/android/template/GodotApp.java android/build/src/com/godot/game/GodotApp.java
 	fi
 }
 

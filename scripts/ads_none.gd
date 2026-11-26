@@ -21,6 +21,9 @@ func can_request_ads() -> bool:
 func is_privacy_required() -> bool:
 	return false
 
+func consent_info() -> String:
+	return "no ads plugin"
+
 func show_privacy() -> void:
 	(func(): privacy_form_closed.emit("")).call_deferred()
 

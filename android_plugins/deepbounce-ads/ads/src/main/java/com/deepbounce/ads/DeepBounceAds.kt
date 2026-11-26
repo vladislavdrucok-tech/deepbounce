@@ -36,6 +36,8 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
     private val tag = "DeepBounceAds"
     private var consentInformation: ConsentInformation? = null
     private val mobileAdsStarted = AtomicBoolean(false)
+    // Ad-Free bought: no request, no show, and a load that was already in flight is dropped
+    private val adsDisabled = AtomicBoolean(false)
     // one loaded ad per ad unit: revive, double-crystals and interstitial units are separate
     private val rewarded = java.util.concurrent.ConcurrentHashMap<String, RewardedAd>()
     private val interstitial = java.util.concurrent.ConcurrentHashMap<String, InterstitialAd>()
@@ -75,8 +77,9 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
     }
 
     /**
-     * testMode: use Google's debug geography (EEA) and register test devices so the consent form and test ads
-     * can be checked; never true in a store build with real ad units.
+     * testMode: Closed testing (Google's test ad units). Debug settings (forced EEA geography) are sent only
+     * together with registered hashed test devices: UMP applies them to those devices alone, so ordinary
+     * testers always get their real geography and the owner's published GDPR message for the real App ID.
      * contentRating: "G", "PG", "T" or "MA" (max ad content rating, matched to the game's rating).
      */
     @UsedByGodot
@@ -92,7 +95,7 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
             val info = UserMessagingPlatform.getConsentInformation(act)
             consentInformation = info
             val builder = ConsentRequestParameters.Builder()
-            if (testMode) {
+            if (testMode && testDeviceIds.isNotEmpty()) {
                 val dbg = ConsentDebugSettings.Builder(act)
                 if (debugEea) dbg.setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
                 for (id in testDeviceIds) dbg.addTestDeviceHashedId(id)
@@ -137,6 +140,34 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
     @UsedByGodot
     fun canRequestAds(): Boolean = consentInformation?.canRequestAds() ?: false
 
+    /**
+     * For the diagnostics log and real-device checks: UMP's consent status and the IAB TCF values the ad SDK
+     * itself reads (gdprApplies, purpose consents). The TC string is not returned.
+     */
+    @UsedByGodot
+    fun consentInfo(): String {
+        val info = consentInformation ?: return "consent: not started"
+        val status = when (info.consentStatus) {
+            ConsentInformation.ConsentStatus.NOT_REQUIRED -> "NOT_REQUIRED"
+            ConsentInformation.ConsentStatus.REQUIRED -> "REQUIRED"
+            ConsentInformation.ConsentStatus.OBTAINED -> "OBTAINED"
+            else -> "UNKNOWN"
+        }
+        var tcf = ""
+        try {
+            val act = activity
+            if (act != null) {
+                val prefs = act.getSharedPreferences(act.packageName + "_preferences", android.content.Context.MODE_PRIVATE)
+                val all = prefs.all
+                tcf = " gdprApplies=" + (all["IABTCF_gdprApplies"] ?: "-") +
+                    " purposeConsents=" + (all["IABTCF_PurposeConsents"] ?: "-")
+            }
+        } catch (e: Throwable) {
+            tcf = " tcf=?"
+        }
+        return "status=$status canRequestAds=${info.canRequestAds()} privacy=${isPrivacyOptionsRequired()}$tcf"
+    }
+
     @UsedByGodot
     fun isPrivacyOptionsRequired(): Boolean =
         consentInformation?.privacyOptionsRequirementStatus == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
@@ -159,6 +190,10 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
 
     @UsedByGodot
     fun loadRewarded(adUnitId: String) {
+        if (adsDisabled.get()) {
+            emit("ad_failed_to_load", "rewarded", adUnitId, -101, "ads disabled (Ad-Free)")
+            return
+        }
         if (!canRequestAds()) {
             emit("ad_failed_to_load", "rewarded", adUnitId, -100, "consent: ads may not be requested")
             return
@@ -166,6 +201,7 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
         ui { act ->
             RewardedAd.load(act, adUnitId, AdRequest.Builder().build(), object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
+                    if (adsDisabled.get()) return
                     rewarded[adUnitId] = ad
                     emit("ad_loaded", "rewarded", adUnitId)
                 }
@@ -180,6 +216,10 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
 
     @UsedByGodot
     fun loadInterstitial(adUnitId: String) {
+        if (adsDisabled.get()) {
+            emit("ad_failed_to_load", "interstitial", adUnitId, -101, "ads disabled (Ad-Free)")
+            return
+        }
         if (!canRequestAds()) {
             emit("ad_failed_to_load", "interstitial", adUnitId, -100, "consent: ads may not be requested")
             return
@@ -187,6 +227,7 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
         ui { act ->
             InterstitialAd.load(act, adUnitId, AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
+                    if (adsDisabled.get()) return
                     interstitial[adUnitId] = ad
                     emit("ad_loaded", "interstitial", adUnitId)
                 }
@@ -208,7 +249,7 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
     @UsedByGodot
     fun showRewarded(adUnitId: String) {
         val ad = rewarded.remove(adUnitId)   // a rewarded ad is shown once
-        if (ad == null) {
+        if (ad == null || adsDisabled.get()) {
             emit("ad_failed_to_show", "rewarded", adUnitId, -1, "not loaded")
             return
         }
@@ -221,7 +262,7 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
     @UsedByGodot
     fun showInterstitial(adUnitId: String) {
         val ad = interstitial.remove(adUnitId)
-        if (ad == null) {
+        if (ad == null || adsDisabled.get()) {
             emit("ad_failed_to_show", "interstitial", adUnitId, -1, "not loaded")
             return
         }
@@ -234,6 +275,7 @@ class DeepBounceAds(godot: Godot) : GodotPlugin(godot) {
     /** Ad-Free bought: drop everything that is loaded, nothing is requested any more. */
     @UsedByGodot
     fun disableAds() {
+        adsDisabled.set(true)
         rewarded.clear()
         interstitial.clear()
     }

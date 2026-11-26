@@ -18,11 +18,16 @@ var available := true              # false: BILLING_UNAVAILABLE (3) on connect
 var network_ok := true             # false: queries answer SERVICE_UNAVAILABLE (2)
 var currency_format := "US$%s"     # how prices are formatted (tests use several locales)
 var unlisted := {}                 # product ids Google Play does not return
-var next := {}                     # pid -> "approve" | "pending" | "cancel" | "error"
+var next := {}                     # pid -> "approve" | "pending" | "cancel" | "error" | "network" | "service" | "hold"
+var launch_code := 0               # answer of launch() itself (e.g. 12 NETWORK_ERROR, 3 BILLING_UNAVAILABLE)
+var answer_without_list := false   # queryPurchases answers OK but without the purchase list (incomplete answer)
+var hide_owned := false            # queryPurchases answers OK but leaves out permanent items (stale Play cache)
+var held := []                     # purchases whose Play window is still open ("hold")
 var fail_ack_once := false
 var fail_consume_once := false
 var account := {}                  # token -> purchase (lives in the "Google account", survives reinstall)
 var calls := {"details": 0, "purchases": 0, "launch": 0, "ack": 0, "consume": 0}
+var sign_key: CryptoKey = null     # tests: sign purchases like Google Play (SHA1withRSA over originalJson)
 var _seq := 0
 
 func _later(f: Callable) -> void:
@@ -61,18 +66,41 @@ func query_purchases() -> void:
 		if not network_ok:
 			purchases_response.emit({"response_code": 2, "debug_message": "offline"})
 			return
-		purchases_response.emit({"response_code": 0, "debug_message": "", "purchases": account.values().duplicate(true)}))
+		if answer_without_list:
+			purchases_response.emit({"response_code": 0, "debug_message": ""})
+			return
+		var list: Array = []
+		for pu in account.values():
+			if hide_owned and CATALOG.product(pu.product_ids[0]).get("type", "") == "permanent":
+				continue
+			list.append(pu.duplicate(true))
+		purchases_response.emit({"response_code": 0, "debug_message": "", "purchases": list}))
 
 func _make(pid: String, state: int) -> Dictionary:
 	_seq += 1
 	var token := "tok_%s_%d_%d" % [pid, _seq, randi() % 100000]
-	return {"order_id": "GPA.%04d" % _seq, "purchase_token": token, "package_name": "com.deepbounce.game",
+	var pu := {"order_id": "GPA.%04d" % _seq, "purchase_token": token, "package_name": "com.deepbounce.game",
 		"purchase_state": state, "purchase_time": int(Time.get_unix_time_from_system() * 1000),
-		"original_json": JSON.stringify({"productId": pid, "purchaseToken": token}), "is_acknowledged": false,
+		"original_json": "", "is_acknowledged": false,
 		"is_auto_renewing": false, "is_suspended": false, "quantity": 1, "signature": "", "product_ids": [pid]}
+	_seal(pu)
+	return pu
+
+func _seal(pu: Dictionary) -> void:
+	## originalJson in Google's shape (purchaseState 0 = purchased, 4 = pending) and, with a test key, its
+	## SHA1withRSA signature — re-made whenever Google Play would hand out an updated purchase.
+	var js := JSON.stringify({"orderId": pu.order_id, "packageName": pu.package_name, "productId": pu.product_ids[0],
+		"purchaseTime": pu.purchase_time, "purchaseState": 4 if int(pu.purchase_state) == 2 else 0,
+		"purchaseToken": pu.purchase_token, "quantity": 1, "acknowledged": bool(pu.is_acknowledged)})
+	pu.original_json = js
+	pu.signature = ""
+	if sign_key:
+		pu.signature = Marshalls.raw_to_base64(Crypto.new().sign(HashingContext.HASH_SHA1, js.sha1_buffer(), sign_key))
 
 func launch(pid: String) -> Dictionary:
 	calls.launch += 1
+	if launch_code != 0:
+		return {"response_code": launch_code, "debug_message": "launch failed"}
 	var p: Dictionary = CATALOG.product(pid)
 	if p.type == "permanent":
 		for t in account:
@@ -80,6 +108,9 @@ func launch(pid: String) -> Dictionary:
 				return {"response_code": 7, "debug_message": "already owned"}
 	var what: String = next.get(pid, "approve")
 	next.erase(pid)
+	if what == "hold":
+		held.append(pid)
+		return {"response_code": 0, "debug_message": ""}
 	_later(func(): _deliver(pid, what))
 	return {"response_code": 0, "debug_message": ""}
 
@@ -88,16 +119,27 @@ func _deliver(pid: String, what: String) -> void:
 		purchase_updated.emit({"response_code": 1, "debug_message": "user canceled"})
 	elif what == "error":
 		purchase_updated.emit({"response_code": 6, "debug_message": "error"})
+	elif what == "network":
+		purchase_updated.emit({"response_code": 12, "debug_message": "network error"})
+	elif what == "service":
+		purchase_updated.emit({"response_code": 2, "debug_message": "service unavailable"})
 	else:
 		var pu := _make(pid, 2 if what == "pending" else 1)
 		account[pu.purchase_token] = pu
 		purchase_updated.emit({"response_code": 0, "debug_message": "", "purchases": [pu.duplicate(true)]})
+
+func finish_held() -> void:
+	## The player finally pays in a Play window that stayed open for a long time.
+	for pid in held:
+		_deliver(pid, "approve")
+	held.clear()
 
 func approve_pending() -> void:
 	## The payment of a pending purchase went through (e.g. cash at a store).
 	for t in account:
 		if int(account[t].purchase_state) == 2:
 			account[t].purchase_state = 1
+			_seal(account[t])
 
 func cancel_pending() -> void:
 	for t in account.keys():
@@ -118,6 +160,7 @@ func acknowledge(token: String) -> void:
 			return
 		if account.has(token):
 			account[token].is_acknowledged = true
+			_seal(account[token])
 		ack_response.emit({"response_code": 0, "debug_message": "", "token": token}))
 
 func consume(token: String) -> void:

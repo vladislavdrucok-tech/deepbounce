@@ -31,6 +31,7 @@ var won_timer := -1.0
 var upgrade_timer := -1.0
 var layout_scale := 1.0
 var layout_origin := Vector2.ZERO
+var _orientation := -1          # last orientation requested on Android (-1 = none yet)
 var save_timer := 0.0
 
 # aiming
@@ -76,6 +77,8 @@ func _ready() -> void:
 		flying_gems = maxi(0, flying_gems - n)
 		G.sfx("gem", -8.0, randf_range(0.95, 1.1), 40))
 	get_viewport().size_changed.connect(_layout)
+	Play.insets_changed.connect(_layout)
+	_setup_screen()
 	G.lang_changed.connect(_on_lang)
 	G.profile_changed.connect(_on_profile)
 	Store.purchase_result.connect(_on_purchase_result)
@@ -145,20 +148,84 @@ static func chapter_of(lv: Dictionary) -> int:
 
 # ---------------------------------------------------------------- layout
 
-func _layout() -> void:
-	var vp := get_viewport().get_visible_rect().size
-	var safe := Rect2(Vector2.ZERO, vp)
+static func is_large_screen() -> bool:
+	## Android's own threshold for large screens: smallest width >= 600 dp (tablets, unfolded foldables,
+	## desktop windows). Phones stay portrait; large screens may rotate and resize freely.
+	var sw := Play.smallest_width_dp()
+	if sw > 0:
+		return sw >= 600        # Android's own value: always current (Godot's dpi can lag after a change)
+	return large_for(Vector2(DisplayServer.screen_get_size()), Vector2(DisplayServer.window_get_size()),
+		float(DisplayServer.screen_get_dpi()))
+
+static func large_for(screen: Vector2, win: Vector2, dpi: float) -> bool:
+	## The larger of the screen and the window decides: the window size always follows a resize (fold/unfold,
+	## another display), while the reported screen size may lag behind on some devices.
+	if dpi <= 0.0:
+		return false
+	var px := maxf(minf(screen.x, screen.y), minf(win.x, win.y))
+	return px * 160.0 / dpi >= 600.0
+
+static func wanted_orientation(large: bool) -> int:
+	return DisplayServer.SCREEN_SENSOR if large else DisplayServer.SCREEN_SENSOR_PORTRAIT
+
+func _setup_screen() -> void:
+	if OS.get_name() != "Android":
+		return
+	_update_orientation()
+	Play.set_immersive(true)
+	# Android can report the new smallest width a moment after the resize event (seen on the emulator when the
+	# size and the density change separately), so the check is repeated once a second as well.
+	var t := Timer.new()
+	t.wait_time = 1.0
+	t.process_mode = Node.PROCESS_MODE_ALWAYS
+	t.timeout.connect(_update_orientation)
+	add_child(t)
+	t.start()
+
+func _update_orientation() -> void:
+	# The manifest no longer locks the orientation (Android 16 ignores such locks on large screens anyway):
+	# portrait is requested at run time on phones only. Re-checked on every resize, so unfolding a foldable or
+	# moving the game to another display switches between the two.
+	if OS.get_name() != "Android":
+		return
+	var large := is_large_screen()
+	var want := wanted_orientation(large)
+	if want != _orientation:
+		_orientation = want
+		DisplayServer.screen_set_orientation(want)
+		G.diag("[screen] %s: smallest width %d dp, screen %s, window %s, %d dpi -> %s" % ["large" if large else "phone",
+			Play.smallest_width_dp(), DisplayServer.screen_get_size(), DisplayServer.window_get_size(), DisplayServer.screen_get_dpi(),
+			"any orientation" if large else "portrait"])
+
+func safe_rect(vp: Vector2) -> Rect2:
+	## The part of the window not covered by visible system bars or a display cutout, in viewport units.
 	var win := Vector2(DisplayServer.window_get_size())
-	if OS.has_feature("mobile") and win.x > 0:
-		var sa := DisplayServer.get_display_safe_area()
-		var f := vp / win
-		safe = Rect2(Vector2(sa.position) * f, Vector2(sa.size) * f).intersection(Rect2(Vector2.ZERO, vp))
-		if safe.size.x < 100 or safe.size.y < 100:
-			safe = Rect2(Vector2.ZERO, vp)
+	if not OS.has_feature("mobile") or win.x <= 0:
+		return Rect2(Vector2.ZERO, vp)
+	return safe_rect_for(vp, win, DisplayServer.get_display_safe_area(), Play.insets)
+
+static func safe_rect_for(vp: Vector2, win: Vector2, sa: Rect2i, ins: Vector4i) -> Rect2:
+	## vp: viewport size; win: window size in pixels; sa: Godot's safe area (pixels); ins: plugin insets
+	## (left, top, right, bottom in pixels, x < 0 = unknown).
+	var safe := Rect2(Vector2.ZERO, vp)
+	var f := vp / win
+	if sa.size.x > 0 and sa.size.y > 0:
+		safe = safe.intersection(Rect2(Vector2(sa.position) * f, Vector2(sa.size) * f))
+	if ins.x >= 0:
+		safe = safe.intersection(Rect2(Vector2(ins.x, ins.y) * f, (win - Vector2(ins.x + ins.z, ins.y + ins.w)) * f))
+	if safe.size.x < 100 or safe.size.y < 100:
+		safe = Rect2(Vector2.ZERO, vp)
+	return safe
+
+func _layout() -> void:
+	_update_orientation()
+	var vp := get_viewport().get_visible_rect().size
+	var safe := safe_rect(vp)
 	var s := minf(safe.size.x / 720.0, safe.size.y / 1280.0)
 	layout_scale = s
 	layout_origin = Vector2(safe.position.x + (safe.size.x - 720.0 * s) * 0.5, safe.position.y)
 	world.scale = Vector2(s, s)
+	world.fit_background(-layout_origin.x / s, (vp.x - layout_origin.x) / s)
 	world.set_meta("base_pos", layout_origin)
 	world.position = layout_origin
 	ui_root.position = layout_origin
@@ -537,8 +604,14 @@ func _on_purchase_result(pid: String, status: String) -> void:
 			screens.toast(G.t("already_owned"))
 		"unavailable":
 			screens.toast(G.t("store_unavailable"))
+		"offline":
+			screens.toast(G.t("store_offline"), 4.0)
+		"billing_unavailable":
+			screens.toast(G.t("billing_unavailable"), 5.0)
+		"unverified":
+			screens.toast(G.t("purchase_unverified"), 6.0)
 		_:
-			screens.toast(G.t("purchase_error"))
+			screens.toast(G.t("purchase_error"), 5.0)
 	screens.rebuild()
 
 func _on_restore_result(status: String, count: int) -> void:
@@ -820,6 +893,7 @@ func _on_lang() -> void:
 
 func _go_back() -> void:
 	## Android back button: never lose a run by accident.
+	G.diag("[input] back: screen %s, mode %d" % [screens.current if screens.is_open() else "-", mode])
 	if Ads.showing != "":
 		return
 	if screens.is_open():

@@ -116,7 +116,10 @@
 "opening_play": "Otwieramy Google Play…",
 "pending_short": "Czekamy na płatność…",
 "purchase_pending": "Płatność w toku. Przedmiot pojawi się, gdy Google Play potwierdzi płatność.",
-"purchase_error": "Zakup się nie udał. Nie pobrano opłaty.",
+"purchase_error": "Zakup nie został ukończony. Jeśli mimo to pobrano opłatę, przedmiot pojawi się sam albo Google Play zwróci pieniądze.",
+"purchase_unverified": "Nie udało się zweryfikować zakupu, więc nic nie przyznano. Jeśli pobrano opłatę, Google Play zwróci ją automatycznie w ciągu 3 dni.",
+"store_offline": "Brak połączenia z Google Play. Sprawdź internet i spróbuj ponownie.",
+"billing_unavailable": "Zakupy w Google Play są niedostępne na tym urządzeniu. Sprawdź, czy Google Play jest zainstalowane i czy jesteś zalogowany.",
 "store_unavailable": "Ten przedmiot jest teraz niedostępny w Google Play.",
 "unavailable": "Niedostępne",
 "retry": "Ponów",
@@ -269,5 +272,7 @@
 "lb_unavailable": "Ranking jest teraz niedostępny. Zaloguj się w Grach Google Play i sprawdź połączenie.",
 "rate_game": "Oceń grę",
 "privacy_policy": "Polityka prywatności",
-"privacy_open_failed": "Nie udało się otworzyć przeglądarki. Polityka prywatności: vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Warunki korzystania",
+"privacy_open_failed": "Nie udało się otworzyć przeglądarki. Polityka prywatności: vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Nie udało się otworzyć przeglądarki. Warunki korzystania: vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

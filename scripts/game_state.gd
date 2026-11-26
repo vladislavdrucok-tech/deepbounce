@@ -13,14 +13,15 @@ signal profile_changed
 const I18N := preload("res://scripts/i18n.gd")
 const CATALOG := preload("res://scripts/catalog.gd")
 const SAVE_PATH := "user://deep_bounce.save"
-const VERSION := "1.2.1"
+const VERSION := "1.2.2"
 const SAVE_VERSION := 4
 const FIRST_CLEAR := [20, 25, 30, 35, 40]     # first-clear bonus per chapter (levels 1-10, 11-20, …)
 
 var settings := {"lang": "en", "lang_set": false, "sound": true, "music": true, "vibration": true, "shake": 2, "reduced_fx": false}
 var meta := {"crystals": 0, "best": 0, "tutorial": 0, "runs": 0, "broken": 0, "spent": 0, "last_finished": "", "review_n": 0, "review_t": 0}
 var cos := {"balls": ["classic"], "ball": "classic", "cannons": ["classic"], "cannon": "classic"}
-var ent := {"no_ads": false, "products": []}   # permanent Google Play products confirmed for this profile
+var ent := {"no_ads": false, "products": [], "absent": {}}   # permanent Google Play products confirmed for this profile;
+# absent: pid -> {"first", "n", "launches"} while Google Play has stopped listing an owned item (see Store._check_absent)
 var purchases := {}     # purchaseToken -> {"pid", "state": pending|granted|revoked, "acked", "consumed", "t", "order"}
 var rewards := {}       # "<kind>:<attempt id>" -> {"state": "earned"|"applied", "amount", "t"}
 var ads := {"finished_total": 0, "since_runs": 0, "since_secs": 0.0, "shown": 0}
@@ -111,6 +112,8 @@ func grant_permanent(pid: String) -> void:
 	## Called inside a purchase transaction (the caller saves).
 	if not ent.products.has(pid):
 		ent.products.append(pid)
+	if ent.has("absent"):
+		ent.absent.erase(pid)
 	var p: Dictionary = CATALOG.product(pid)
 	if p.get("grants", "") == "no_ads":
 		ent.no_ads = true
@@ -302,7 +305,7 @@ func reset_defaults() -> void:
 	settings = {"lang": "en", "lang_set": false, "sound": true, "music": true, "vibration": true, "shake": 2, "reduced_fx": false}
 	meta = {"crystals": 0, "best": 0, "tutorial": 0, "runs": 0, "broken": 0, "spent": 0, "last_finished": "", "review_n": 0, "review_t": 0}
 	cos = {"balls": ["classic"], "ball": "classic", "cannons": ["classic"], "cannon": "classic"}
-	ent = {"no_ads": false, "products": []}
+	ent = {"no_ads": false, "products": [], "absent": {}}
 	purchases = {}
 	rewards = {}
 	ads = {"finished_total": 0, "since_runs": 0, "since_secs": 0.0, "shown": 0}
@@ -345,7 +348,8 @@ func apply_data(data: Dictionary) -> void:
 	if not cos.cannons.has(String(cos.cannon)):
 		cos.cannon = "classic"
 	var e: Dictionary = data.get("ent", {})
-	ent = {"no_ads": bool(e.get("no_ads", false)), "products": Array(e.get("products", [])).duplicate()}
+	ent = {"no_ads": bool(e.get("no_ads", false)), "products": Array(e.get("products", [])).duplicate(),
+		"absent": (e.absent.duplicate(true) if e.get("absent", null) is Dictionary else {})}
 	purchases = data.get("purchases", {})
 	rewards = data.get("rewards", {})
 	var a: Dictionary = data.get("ads", {})

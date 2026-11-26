@@ -74,10 +74,14 @@ func _run() -> void:
 			await _start()
 		"money":
 			await _money()
+		"skins":
+			await _skins()
 		"store":
 			await _store()
 		"s29":
 			await load("res://scripts/qa_s29.gd").new().run(self)
+		"soak":
+			await load("res://scripts/qa_soak.gd").new().run(self)
 		_:
 			log_line("unknown qa mode " + mode)
 	finish()
@@ -491,7 +495,13 @@ func _run_volley_at(speed: int, seed: int, ang: float) -> int:
 		main._process(1.0 / 60.0)      # the real game loop, frame by frame
 		guard += 1
 	main.speed_override = 0
-	return main.sim.state_hash()
+	return physics_hash()
+
+func physics_hash() -> int:
+	## The end state of a volley without run_id, the random id every new run gets (for rewards and ads).
+	var d: Dictionary = main.sim.to_dict()
+	d.erase("run_id")
+	return hash(JSON.stringify(d, "", true, true))
 
 func _speed() -> void:
 	var same := true
@@ -991,10 +1001,20 @@ func _money() -> void:
 	await wait_s(0.5)
 	check(G.is_ad_free() and G.owns("ball", "amber"), "restore without network keeps the entitlements")
 	fake_play.network_ok = true
-	# a confirmed refund removes it
+	# a refund: one answer without the item keeps it (could be a stale answer) ...
 	fake_play.refund("db_ball_amber")
 	Store.restore()
 	await wait_s(0.5)
+	check(G.owns("ball", "amber"), "one answer of Google Play without the item does not remove it yet")
+	# ... confirmed by more answers from another launch an hour later, it is withdrawn
+	Store.launch_id = "qa-launch-2"
+	Store.clock_offset += 1800
+	Store.restore()
+	await wait_s(0.5)
+	Store.clock_offset += 1900
+	Store.restore()
+	await wait_s(0.5)
+	Store.clock_offset = 0
 	check(not G.owns("ball", "amber") and G.selected("ball") == "classic", "a refund confirmed by Google Play removes the finish and falls back to Classic")
 	G.reset_defaults()
 	G.save_game()
@@ -1094,3 +1114,50 @@ func _store() -> void:
 		main.screens.close()
 	G.test_no_save = false
 	finish()
+
+# ---------------------------------------------------------------- skins: every finish in a real volley
+
+func _skins() -> void:
+	## Every ball and cannon finish is drawn in a real volley (screenshot each), and the volley ends in exactly the
+	## same state whatever the finish: cosmetics never change the physics.
+	var CAT := preload("res://scripts/catalog.gd")
+	for b in CAT.BALLS:
+		if not G.cos.balls.has(b.id):
+			G.cos.balls.append(b.id)
+	for c in CAT.CANNONS:
+		if not G.cos.cannons.has(c.id):
+			G.cos.cannons.append(c.id)
+	var hashes := {}
+	var n: int = maxi(CAT.BALLS.size(), CAT.CANNONS.size())
+	for i in n:
+		var bid: String = CAT.BALLS[mini(i, CAT.BALLS.size() - 1)].id
+		var cid: String = CAT.CANNONS[mini(i, CAT.CANNONS.size() - 1)].id
+		G.select_skin("ball", bid)
+		G.select_skin("cannon", cid)
+		main.start_new_run(777)
+		main.apply_skins()
+		main.world.set_ball_skin(bid, true)
+		G.meta.tutorial = 6
+		main.hud.hide_hint()
+		check(main.world.skin == cid and main.world.ball_skin == bid and G.selected("ball") == bid and G.selected("cannon") == cid,
+			"finish %s ball + %s cannon selected and shown" % [bid, cid])
+		main._fire(1.1)
+		main.speed_override = 1
+		for k in 50:              # a fixed moment of the volley: balls in flight, drawn with the finish
+			main._process(1.0 / 60.0)
+		main.freeze = true
+		await shot("skin_%02d_%s_%s" % [i, bid, cid])
+		main.freeze = false
+		main.speed_override = 0
+		var guard := 0
+		while main.sim.phase == Sim.PH_VOLLEY and guard < 20000:
+			main._process(1.0 / 60.0)
+			guard += 1
+		hashes["%s/%s" % [bid, cid]] = physics_hash()
+	var vals: Array = hashes.values()
+	var same := true
+	for v in vals:
+		same = same and v == vals[0]
+	check(same and vals.size() == n, "the same volley ends in the same state with every finish (%d combinations)" % vals.size(), str(hashes))
+	G.reset_defaults()
+	G.save_game()

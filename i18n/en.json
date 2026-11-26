@@ -110,7 +110,10 @@
 "opening_play": "Opening Google Play…",
 "pending_short": "Waiting for payment…",
 "purchase_pending": "Payment pending. The item arrives as soon as Google Play confirms the payment.",
-"purchase_error": "The purchase did not go through. You have not been charged.",
+"purchase_error": "The purchase was not completed. If you were charged anyway, the item will appear by itself or Google Play will refund you.",
+"purchase_unverified": "The purchase could not be verified, so nothing was granted. If you were charged, Google Play refunds it automatically within 3 days.",
+"store_offline": "No connection to Google Play. Check your internet and try again.",
+"billing_unavailable": "Google Play purchases are not available on this device. Check that Google Play is installed and you are signed in.",
 "store_unavailable": "This item is not available on Google Play right now.",
 "unavailable": "Unavailable",
 "retry": "Retry",
@@ -251,5 +254,7 @@
 "lb_unavailable": "Leaderboards are not available right now. Sign in to Google Play Games and check your connection.",
 "rate_game": "Rate the Game",
 "privacy_policy": "Privacy Policy",
-"privacy_open_failed": "Could not open the browser. The Privacy Policy is at vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Terms of Use",
+"privacy_open_failed": "Could not open the browser. The Privacy Policy is at vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Could not open the browser. The Terms of Use are at vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

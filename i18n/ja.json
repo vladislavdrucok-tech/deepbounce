@@ -107,7 +107,10 @@
 "opening_play": "Google Play を開いています…",
 "pending_short": "支払い待ち…",
 "purchase_pending": "支払いが保留中です。Google Play が支払いを確認しだいアイテムが届きます。",
-"purchase_error": "購入は完了しませんでした。請求はされていません。",
+"purchase_error": "購入は完了しませんでした。それでも請求された場合は、アイテムが自動で届くか、Google Play から返金されます。",
+"purchase_unverified": "購入を確認できなかったため、アイテムは付与されていません。請求された場合は、3 日以内に Google Play から自動で返金されます。",
+"store_offline": "Google Play に接続できません。インターネット接続を確認して、もう一度お試しください。",
+"billing_unavailable": "この端末では Google Play での購入を利用できません。Google Play がインストールされ、ログインしているか確認してください。",
 "store_unavailable": "このアイテムは現在 Google Play で購入できません。",
 "unavailable": "利用不可",
 "retry": "再試行",
@@ -242,5 +245,7 @@
 "lb_unavailable": "ランキングは現在利用できません。Google Play ゲームにログインし、接続を確認してください。",
 "rate_game": "ゲームを評価",
 "privacy_policy": "プライバシーポリシー",
-"privacy_open_failed": "ブラウザを開けませんでした。プライバシーポリシー：vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "利用規約",
+"privacy_open_failed": "ブラウザを開けませんでした。プライバシーポリシー：vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "ブラウザを開けませんでした。利用規約：vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

@@ -116,7 +116,10 @@
 "opening_play": "Відкриваємо Google Play…",
 "pending_short": "Очікуємо оплату…",
 "purchase_pending": "Оплата очікується. Покупка з'явиться, щойно Google Play підтвердить оплату.",
-"purchase_error": "Покупка не відбулася. Гроші не списано.",
+"purchase_error": "Покупку не завершено. Якщо оплату все ж списано, товар з'явиться сам або Google Play поверне гроші.",
+"purchase_unverified": "Не вдалося перевірити покупку, тому товар не видано. Якщо оплату списано, Google Play автоматично поверне гроші протягом 3 днів.",
+"store_offline": "Немає зв'язку з Google Play. Перевір інтернет і спробуй ще раз.",
+"billing_unavailable": "Покупки через Google Play недоступні на цьому пристрої. Перевір, чи встановлено Google Play і чи ввійшов ти в акаунт.",
 "store_unavailable": "Цей товар зараз недоступний у Google Play.",
 "unavailable": "Недоступно",
 "retry": "Повторити",
@@ -269,5 +272,7 @@
 "lb_unavailable": "Рейтинг зараз недоступний. Увійди в Google Play Ігри та перевір з'єднання.",
 "rate_game": "Оцінити гру",
 "privacy_policy": "Політика конфіденційності",
-"privacy_open_failed": "Не вдалося відкрити браузер. Політика конфіденційності: vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "Умови використання",
+"privacy_open_failed": "Не вдалося відкрити браузер. Політика конфіденційності: vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "Не вдалося відкрити браузер. Умови використання: vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }

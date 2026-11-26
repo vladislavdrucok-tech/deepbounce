@@ -107,7 +107,10 @@
 "opening_play": "正在打开 Google Play…",
 "pending_short": "等待付款…",
 "purchase_pending": "付款处理中。Google Play 确认付款后物品会立即到账。",
-"purchase_error": "购买未完成。未产生任何扣款。",
+"purchase_error": "购买未完成。如果仍被扣款，物品会自动到账，或由 Google Play 退款。",
+"purchase_unverified": "无法验证此次购买，因此未发放物品。如果已扣款，Google Play 会在 3 天内自动退款。",
+"store_offline": "无法连接 Google Play。请检查网络后重试。",
+"billing_unavailable": "此设备无法使用 Google Play 购买。请确认已安装 Google Play 并已登录账号。",
 "store_unavailable": "此物品目前无法在 Google Play 购买。",
 "unavailable": "不可用",
 "retry": "重试",
@@ -242,5 +245,7 @@
 "lb_unavailable": "排行榜暂时不可用。请登录 Google Play 游戏并检查网络连接。",
 "rate_game": "给游戏评分",
 "privacy_policy": "隐私政策",
-"privacy_open_failed": "无法打开浏览器。隐私政策：vladislavdrucok-tech.github.io/deepbounce"
+"terms_of_use": "使用条款",
+"privacy_open_failed": "无法打开浏览器。隐私政策：vladislavdrucok-tech.github.io/deepbounce",
+"terms_open_failed": "无法打开浏览器。使用条款：vladislavdrucok-tech.github.io/deepbounce/terms-of-use.html"
 }
