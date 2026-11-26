@@ -235,3 +235,29 @@ Google APIs, 1080×2280 @440 dpi, 4 ГБ RAM, без апаратного при
    не перевірено.
 4. Попередження Play Console про застарілі edge-to-edge API — з коду бібліотек, не з гри.
 5. Сторінки 16 КБ — вирівняно, ризику немає.
+
+## Завдання 4/5 — фінальна збірка (26.11, зібрано з коміту `99035d7`, гілка `release/1.2.2`)
+
+Попередня збірка-кандидат 25.11 13:47 (тестовий App ID) збережена в `build/previous_rc_2026-11-25_1347/` — **не
+завантажувати**.
+
+| Файл | Розмір | SHA-256 |
+|---|---|---|
+| `build/DeepBounce-1.2.2.aab` | 68 491 260 Б | `f45934a417a417d892eb7dcf4e34290c8d47d999fe3be723d57dab2a36e0e5d7` |
+| `build/DeepBounce-1.2.2.apk` | 68 634 898 Б | `b620ef91940646812d82c40d1ca2b2030d411d346d495e184c533e640f033235` |
+
+| Перевірка | Результат |
+|---|---|
+| Усі автотести перед збіркою: імпорт 0 помилок; SELFTEST 36/36, PLAY 34/34, LEVELS 52/52, MONETIZATION 173/173; QA ref, flow 12/12, money 50/50, perf, speed, shifts, s29, skins 8/8, soak; тур 12 мов (300 знімків, 0 відсутніх ключів); 4 розміри екрана; у логах 0 `SCRIPT ERROR` | **PASS** |
+| Kotlin: юніт-тести DeepBouncePlay 5/5; компіляція DeepBounceAds без помилок | **PASS** |
+| `com.deepbounce.game`, versionName 1.2.2, versionCode 10, minSdk 24, targetSdk 36 (APK і AAB) | **PASS** |
+| Підпис тим самим ключем, що 1.2.1: сертифікат SHA-256 `D9:82:EB:F1:…:0E:C6:6B:70` (CN=Deep Bounce, O=Deep Bounce, C=UA); APK — `apksigner` v2 Verifies; AAB — `jarsigner` jar verified | **PASS** |
+| ZIP-цілісність APK і AAB; `bundletool validate` (exit 0) | **PASS** |
+| Маніфест: AdMob App ID `ca-app-pub-6607622048074974~8739194745` (справжній); `screenOrientation=fullUser`, `resizeableActivity=true`, `isGame`, `appCategory=game`, `allowBackup=false`; supports-screens small…xlarge | **PASS** |
+| Дозволи: INTERNET, ACCESS_NETWORK_STATE, VIBRATE, BILLING, AD_ID, ACCESS_ADSERVICES_* (Ads SDK), WAKE_LOCK і FOREGROUND_SERVICE (WorkManager з бібліотек Google), DYNAMIC_RECEIVER_NOT_EXPORTED (androidx) — без камери, мікрофона, локації, контактів, сховища | **PASS** |
+| SDK: Google Mobile Ads + UMP, Play Billing, Play Games, androidx, Godot; сторонніх рекламних мереж і Firebase Analytics немає (лише транзитивні кодувальники `firebase.encoders` із Play Services) | **PASS** |
+| Конфіг у пакеті: `use_test_ads=true`, тестові блоки rewarded `…/5224354917` і interstitial `…/1033173712`, `test_device_ids=""`, `debug_geography_eea=false`, `license_key=""` | **PASS** (тестова реклама; ключ ліцензії — від власника) |
+| Секрети: 652 (APK) і 661 (AAB) файлів — немає `.jks/.keystore/.pem/.p12/.env/.key`, немає пароля ключа; «PRIVATE KEY» лише в константах формату PEM у `libgodot_android.so` (mbedTLS, без ключів); `tests/`, `tools/`, `docs/` не запаковані | **PASS** |
+| Активність: `OnBackPressedCallback` (Android 16); застарілих edge-to-edge викликів у `GodotApp` 0; методи плагінів `consentInfo`, `disableAds`, `smallestWidthDp` на місці | **PASS** |
+| Сторінки 16 КБ: усі `.so` LOAD `0x4000`, `zipalign -c -P 16` OK | **PASS** |
+| `enableOnBackInvokedCallback=false` у маніфесті — лише на `com.google.android.gms.ads.AdActivity` (з Ads SDK), не на активності гри | інформація |
