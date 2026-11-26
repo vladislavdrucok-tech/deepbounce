@@ -261,3 +261,14 @@ Google APIs, 1080×2280 @440 dpi, 4 ГБ RAM, без апаратного при
 | Активність: `OnBackPressedCallback` (Android 16); застарілих edge-to-edge викликів у `GodotApp` 0; методи плагінів `consentInfo`, `disableAds`, `smallestWidthDp` на місці | **PASS** |
 | Сторінки 16 КБ: усі `.so` LOAD `0x4000`, `zipalign -c -P 16` OK | **PASS** |
 | `enableOnBackInvokedCallback=false` у маніфесті — лише на `com.google.android.gms.ads.AdActivity` (з Ads SDK), не на активності гри | інформація |
+
+**Емулятор Android 11 (API 30), фінальний APK `b620ef91…3235`** (AVD перестворено з `-wipe-data`):
+
+| Перевірка | Результат |
+|---|---|
+| Встановлення 1.2.1 (код 8), потім фінального 1.2.2 поверх: `Success` з першої спроби; на пристрої versionCode 10, minSdk 24, targetSdk 36; SHA-256 `base.apk` = файлу збірки | **PASS** |
+| Оновлення зі збереженням: збереження, записане кодом 1.2.1 (1234 кристали, рекорд 57 м, 13 рівнів, 9 зірок, скіни copper/ember, мова uk, музика вимкнена), 1.2.1 його прочитала → оновлення → md5 той самий; 1.2.2 стартувала `save format 4, language uk`; після роботи 1.2.2 усі поля збігаються; меню показує 57 м, 9/150, 1234 | **PASS** |
+| Запуск, портрет (`mOrientation=12`), системні панелі приховані (знімок 1080×2280 без панелей) | **PASS** |
+| Без Google Play: Billing код 3, гра працює; UMP без мережі: `can_request=false`; діагностика UMP тепер пишеться (`status=UNKNOWN canRequestAds=false …`) | **PASS** |
+| «Назад» на Android 11 з новою активністю: рівно один рядок `[input] back: screen menu` (подвійної обробки немає), гра зберегла стан і закрилась | **PASS** (перша спроба перехоплена системним діалогом ANR `systemui` емулятора — це не гра) |
+| Android 13/15/16, справжні пристрої, повернення з реклами | **NOT TESTED** |
